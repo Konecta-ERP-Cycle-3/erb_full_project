@@ -6,6 +6,7 @@
 **File**: `.github/workflows/ci-cd-pipeline.yml`
 
 This workflow automates:
+- ✅ **Security Scanning**: Semgrep security and code quality scanning
 - ✅ **Testing**: Runs tests for all .NET services, Java services, and frontend
 - ✅ **Building**: Builds Docker images for all services (8 microservices + 2 AI models)
 - ✅ **Pushing**: Pushes images to Docker Hub
