@@ -11,10 +11,14 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_REGISTRY: docker.io
+  # Intended: Use AWS ECR, but fallback to Docker Hub for now
+  # DOCKER_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  DOCKER_REGISTRY: docker.io  # Fallback: Docker Hub (ECR would be used with AWS access)
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   IMAGE_TAG: ${{ github.sha }}
   AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID || '' }}  # Placeholder: Would be used for ECR
+  ECR_REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI || '' }}  # Placeholder: ECR base URI
 
 jobs:
   # Test .NET Services
@@ -161,16 +165,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Log in to Docker Hub (Fallback - ECR intended)
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      # Intended: Login to AWS ECR (commented out - requires AWS credentials)
+      # - name: Configure AWS credentials for ECR
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ secrets.AWS_REGION }}
+      #
+      # - name: Log in to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v2
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # Intended: Use ECR repository URI
+          # images: ${{ secrets.ECR_REPOSITORY_URI }}/${{ matrix.service.name }}
+          # Fallback: Docker Hub
           images: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}
           tags: |
             type=sha,prefix={{branch}}-
@@ -187,15 +206,39 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache,mode=max
 
-  # Deploy to AWS EC2
-  # NOTE: Cloud deployment was not fully completed due to infrastructure challenges
-  # This job may fail or be skipped until cloud infrastructure is properly configured
+  # Deploy to AWS EC2 (Testing Phase)
+  # NOTE: Deployment was not completed due to lack of AWS account access
+  # Intended Strategy: Deploy to EC2 for testing, then to ECS for production
+  # This job is a placeholder and will fail without AWS credentials
   deploy-to-ec2:
-    name: Deploy to AWS EC2
+    name: Deploy to AWS EC2 (Testing Phase)
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     continue-on-error: true  # Allow workflow to continue even if deployment fails
+
+  # Deploy to AWS ECS (Production Phase)
+  # NOTE: This would be the production deployment step after EC2 testing
+  # Currently not implemented due to lack of AWS access
+  # deploy-to-ecs:
+  #   name: Deploy to AWS ECS (Production)
+  #   runs-on: ubuntu-latest
+  #   needs: [build-and-push, deploy-to-ec2]
+  #   if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+  #   continue-on-error: true
+  #   steps:
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Update ECS service
+  #       run: |
+  #         aws ecs update-service \
+  #           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+  #           --service ${{ secrets.ECS_SERVICE_NAME }} \
+  #           --force-new-deployment
 
     steps:
       - name: Checkout code
