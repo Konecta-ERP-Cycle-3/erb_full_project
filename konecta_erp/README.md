@@ -1,241 +1,314 @@
 # Konecta ERP – Enterprise Resource Planning System
 
-Welcome to Konecta ERP! This is a comprehensive Enterprise Resource Planning system built with microservices architecture, integrating HR, Finance, Inventory, and Reporting modules.
+<div align="center">
 
-## 📚 Documentation
+![Konecta ERP](https://img.shields.io/badge/Konecta-ERP-blue)
+![.NET](https://img.shields.io/badge/.NET-9.0-purple)
+![Angular](https://img.shields.io/badge/Angular-19-red)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-- **[Complete Project Documentation](docs/PROJECT_DOCUMENTATION.md)** - Comprehensive guide covering architecture, setup, development, deployment, and more
-- **[CI/CD Quick Start](devops/CI_CD_QUICK_START.md)** - Quick guide for setting up CI/CD pipeline
-- **[Secrets Setup Guide](devops/SECRETS_SETUP.md)** - Detailed guide for configuring GitHub secrets
-- **[Team Collaboration Guide](docs/TEAM_GUIDE.md)** - Team workflow and collaboration guidelines
+**A comprehensive Enterprise Resource Planning system built with microservices architecture**
+
+[Getting Started](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [API Documentation](#-api-documentation)
+
+</div>
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#-overview)
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Quick Start](#-quick-start)
+- [Documentation](#-documentation)
+- [API Documentation](#-api-documentation)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Contributing](#-contributing)
+
+---
+
+## 🎯 Overview
+
+Konecta ERP is a modern, scalable Enterprise Resource Planning system that integrates core business functions including:
+
+- **Human Resources Management** - Employee lifecycle, departments, recruitment
+- **Financial Management** - Invoicing, expenses, budgets, payroll
+- **Inventory Management** - Product catalog, stock tracking, operations
+- **User Management** - Role-based access control, permissions
+- **Reporting & Analytics** - Comprehensive reporting across all modules
+
+Built using a **microservices architecture** with .NET and Spring Boot, ensuring scalability, maintainability, and independent deployment of services.
+
+---
+
+## ✨ Features
+
+- 🔐 **JWT-based Authentication** with OIDC support
+- 🏗️ **Microservices Architecture** - Independent, scalable services
+- 🔄 **Event-Driven Communication** - RabbitMQ message broker
+- 🌐 **API Gateway** - Single entry point with routing and load balancing
+- 📊 **Service Discovery** - Consul-based service registration
+- ⚙️ **Centralized Configuration** - Spring Cloud Config Server
+- 🐳 **Dockerized** - Complete containerization with Docker Compose
+- 📱 **Modern Frontend** - Angular 19 with PrimeNG
+- 🤖 **AI/ML Integration** - HR prediction and forecasting models
+- 🚀 **CI/CD Pipeline** - Automated testing, building, and deployment
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Frontend (Angular)                    │
+│                  http://localhost:4200                   │
+└───────────────────────┬─────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│              API Gateway (Spring Cloud)                │
+│                 http://localhost:8080                     │
+└───────┬───────────────┬───────────────┬────────────────┘
+        │               │               │
+   ┌────▼────┐    ┌────▼────┐    ┌────▼────┐
+   │  .NET   │    │  Java   │    │Infrastructure│
+   │Services │    │Services │    │  Services   │
+   ├─────────┤    ├─────────┤    ├────────────┤
+   │ Auth    │    │ Gateway │    │ SQL Server │
+   │ HR      │    │ Config  │    │ RabbitMQ   │
+   │ Finance │    │Reporting│    │ Consul     │
+   │Inventory│    │         │    │ MailHog    │
+   │User Mgmt│    │         │    │            │
+   └─────────┘    └─────────┘    └────────────┘
+```
+
+### Microservices
+
+| Service | Technology | Port | Database |
+|---------|-----------|------|----------|
+| Authentication | .NET 9 | 7280 | Konecta_Auth |
+| HR | .NET 9 | 5005 | Konecta_HR |
+| Finance | .NET 9 | 5003 | Konecta_Finance |
+| Inventory | .NET 9 | 5020 | Konecta_Inventory |
+| User Management | .NET 9 | 5078 | Konecta_UserManagement |
+| API Gateway | Spring Boot | 8080 | - |
+| Config Server | Spring Boot | 8888 | - |
+| Reporting | Spring Boot | 8085 | - |
+
+For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
 
 ## 🚀 Quick Start
 
-This document provides a quick guide to get started with Konecta ERP locally. For complete documentation, see [PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).
+### Prerequisites
+
+- **Docker Desktop** (Windows/macOS) or **Docker Engine** (Linux)
+- **Git**
+- **8 GB RAM** minimum (16 GB recommended)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Konecta-ERP-Cycle-3/erb_full_project.git
+   cd erb_full_project/konecta_erp
+   ```
+
+2. **Start all services**
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Verify services are running**
+   ```bash
+   docker compose ps
+   ```
+
+4. **Access the application**
+   - API Gateway: http://localhost:8080
+   - Swagger UI: http://localhost:8080/swagger/auth/index.html
+   - Consul UI: http://localhost:8500
+   - RabbitMQ UI: http://localhost:15672 (guest/guest)
+
+### Default Credentials
+
+- **Admin Email**: `admin@konecta.com`
+- **Admin Password**: `Admin@123456`
+
+### First Steps
+
+1. **Login via Swagger**
+   - Navigate to http://localhost:8080/swagger/auth/index.html
+   - Use `POST /api/auth/login` with admin credentials
+   - Copy the `accessToken` from response
+   - Click "Authorize" button and paste `Bearer <token>`
+
+2. **Explore APIs**
+   - HR Service: http://localhost:8080/swagger/hr/index.html
+   - Finance Service: http://localhost:8080/swagger/finance/index.html
+   - Inventory Service: http://localhost:8080/swagger/inventory/index.html
+
+For detailed setup instructions, see [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md).
 
 ---
 
-## 1. Prerequisites
+## 📚 Documentation
 
-Install the following tools before you start:
+### Essential Guides
 
-1. **Git** – to clone the repository.
-2. **Docker Desktop** (Windows/macOS) or **Docker Engine** (Linux) with **Docker Compose** support.
-3. **PowerShell** (installed by default on modern Windows versions) – used in the examples below. On macOS/Linux you can translate the commands to bash equivalents.
-4. **.NET 9 SDK** *(optional but recommended)* – needed only if you want to run or debug individual services outside Docker.
+- **[Getting Started](docs/GETTING_STARTED.md)** - Complete setup and onboarding guide
+- **[Architecture](docs/ARCHITECTURE.md)** - System architecture and design decisions
+- **[API Documentation](docs/API.md)** - Complete API reference
+- **[Quick Reference](docs/QUICK_REFERENCE.md)** - Common commands and quick tasks
 
-Make sure Docker Desktop is running and you have at least 8 GB RAM available for containers.
+### Development
+
+- **[Development Guide](docs/DEVELOPMENT.md)** - Local development setup and workflows
+- **[Team Guide](docs/TEAM_GUIDE.md)** - Team collaboration and workflow
+- **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
+
+### Operations
+
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+- **[CI/CD Setup](devops/CI_CD_QUICK_START.md)** - CI/CD pipeline configuration
+- **[Troubleshooting](devops/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Complete Documentation Index
+
+See [docs/README.md](docs/README.md) for the complete documentation index.
 
 ---
 
-## 2. Repository Structure Overview
+## 🔌 API Documentation
+
+All APIs are accessible through the API Gateway at `http://localhost:8080` and documented via Swagger UI:
+
+| Service | Swagger URL | Description |
+|---------|------------|-------------|
+| Authentication | `/swagger/auth/index.html` | User authentication and JWT |
+| HR | `/swagger/hr/index.html` | Employee and department management |
+| Finance | `/swagger/finance/index.html` | Invoices, expenses, budgets |
+| Inventory | `/swagger/inventory/index.html` | Product catalog and stock |
+| User Management | `/swagger/users/index.html` | User directory and roles |
+| Reporting | `/swagger/reporting` | Analytics and reports |
+
+### Authentication
+
+All protected endpoints require a JWT token in the Authorization header:
+
+```bash
+Authorization: Bearer <your-token>
+```
+
+For complete API documentation, see [docs/API.md](docs/API.md).
+
+---
+
+## 🛠️ Technology Stack
+
+### Backend
+- **.NET 9.0** - Microservices (C#)
+- **Spring Boot 3.2** - API Gateway, Config Server, Reporting
+- **Entity Framework Core** - ORM for .NET services
+- **ASP.NET Core Identity** - Authentication
+
+### Frontend
+- **Angular 19** - Frontend framework
+- **PrimeNG 19** - UI component library
+- **RxJS** - Reactive programming
+
+### Infrastructure
+- **SQL Server 2022** - Primary database
+- **RabbitMQ 3.13** - Message broker
+- **Consul 1.18** - Service discovery
+- **Docker & Docker Compose** - Containerization
+
+### DevOps
+- **GitHub Actions** - CI/CD pipeline
+- **Docker Hub** - Container registry
+
+---
+
+## 📁 Project Structure
 
 ```
 konecta_erp/
-├─ backend/
-│  ├─ AuthenticationService/
-│  ├─ FinanceService/
-│  ├─ HrService/
-│  ├─ InventoryService/
-│  ├─ ReportingService/
-│  ├─ UserManagementService/
-│  └─ config/                      # Spring Cloud Config server sources
-├─ docker/                         # SQL seed scripts
-├─ docker-compose.yml              # Main orchestration file
-└─ README.md (this guide)
+├── backend/                    # Backend microservices
+│   ├── AuthenticationService/   # Auth & JWT service
+│   ├── HrService/              # HR management
+│   ├── FinanceService/         # Financial operations
+│   ├── InventoryService/       # Inventory management
+│   ├── UserManagementService/  # User directory
+│   ├── ReportingService/       # Reporting & analytics
+│   ├── ApiGateWay/             # API Gateway
+│   ├── config/                 # Config server
+│   └── SharedContracts/       # Shared contracts
+├── frontend/                   # Angular application
+├── Ai/                         # ML models and artifacts
+├── devops/                     # CI/CD and deployment
+│   ├── scripts/                # Deployment scripts
+│   └── *.md                    # DevOps documentation
+├── docker/                     # Docker configurations
+│   └── sqlserver/              # SQL seed scripts
+├── docs/                       # Documentation
+│   ├── GETTING_STARTED.md      # Setup guide
+│   ├── ARCHITECTURE.md         # Architecture docs
+│   ├── API.md                  # API reference
+│   └── ...                     # Other docs
+├── docker-compose.yml          # Development environment
+└── docker-compose.prod.yml     # Production environment
 ```
 
 ---
 
-## 3. First-Time Configuration
+## 🤝 Contributing
 
-1. **Clone the repository** (skip if you already have it locally):
-   ```powershell
-   git clone https://github.com/<your-org>/Konecta_ERP.git
-   cd Konecta_ERP/konecta_erp
-   ```
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
+### Quick Contribution Steps
 
-3. **Check Docker resources**:
-   - Ensure Docker Desktop has enough CPU/RAM allocated (recommended: ≥ 4 CPUs / 6 GB for the full stack).
-
----
-
-## 4. Starting the Platform
-
-From the repository root (`konecta_erp` folder), run:
-
-```powershell
-docker compose up -d --build
-```
-
-This command:
-
-- Builds all microservices and supporting infrastructure.
-- Starts SQL Server, Consul, RabbitMQ, MailHog, Spring Cloud Config, API Gateway, and .NET microservices.
-- Runs the SQL seed container once to create databases and seed the admin user, roles, and permissions.
-
-> **Tip:** You can monitor startup logs with `docker compose logs -f`.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-## 5. Database & Admin Seeding
+## 📞 Support
 
-- The `sqlserver` container hosts both `Konecta_Auth` and `Konecta_UserManagement` databases.
-- Seed scripts under `docker/sqlserver/` run automatically via the `sqlserver-seed` container.
-- Admin account seeded automatically:
-  - **Email:** `admin@konecta.com`
-  - **Password:** `Admin@123456`
-  - **Role:** `System Admin` (full permissions across all services)
-
-If you need to rerun seeds (e.g., after resetting data):
-
-```powershell
-docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "pa55w0rd!" -C -i /scripts/seed-admin.sql
-docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "pa55w0rd!" -C -i /scripts/assign-admin-permissions.sql
-```
+- **Documentation**: [docs/README.md](docs/README.md)
+- **Issues**: [GitHub Issues](https://github.com/Konecta-ERP-Cycle-3/erb_full_project/issues)
+- **Troubleshooting**: [devops/TROUBLESHOOTING.md](devops/TROUBLESHOOTING.md)
 
 ---
 
-## 6. Verifying Service Health
+## 📄 License
 
-| Service | Purpose | Local URL |
-|---------|---------|-----------|
-| Consul UI | Service discovery | http://localhost:8500 |
-| RabbitMQ UI | Message broker dashboard | http://localhost:15672 (user/pass: guest/guest) |
-| MailHog UI | Local email inbox | http://localhost:8025 |
-| Config Server | Centralized configuration | http://localhost:8888 |
-| API Gateway | Single entry point | http://localhost:8080 |
-| Authentication Service | Auth microservice | http://localhost:7280 |
-
-Ensure each service is running (`docker compose ps`). If something is unhealthy, inspect logs (`docker compose logs <service-name>`).
+[Add your license here]
 
 ---
 
-## 7. Swagger & API Access via Gateway
+## 👥 Team
 
-All Swagger UIs and APIs are exposed through the API Gateway on **port 8080**. Replace `<service>` with the relevant segment:
+This project is developed by multiple specialized teams:
 
-| Microservice | Swagger URL |
-|--------------|-------------|
-| Authentication | http://localhost:8080/swagger/auth/index.html |
-| HR | http://localhost:8080/swagger/hr/index.html |
-| User Management | http://localhost:8080/swagger/users/index.html |
-| Finance | http://localhost:8080/swagger/finance/index.html |
-| Inventory | http://localhost:8080/swagger/inventory/index.html |
-| Reporting | http://localhost:8080/swagger/reporting |
+- **🚀 Fullstack Team** - Backend and frontend development
+- **🔧 DevOps Team** - CI/CD and deployment automation
+- **☁️ Cloud Team** - Infrastructure and cloud resources
+- **🤖 AI/ML Team** - Machine learning models
 
-Each Swagger UI is preconfigured with JWT Bearer support.
+See [TEAMS.md](TEAMS.md) for detailed team information.
 
 ---
 
-## 8. Logging in as Admin
+<div align="center">
 
-1. Open Authentication Swagger: http://localhost:8080/swagger/authentication
-2. Use `POST /api/auth/login` with:
-   ```json
-   {
-     "email": "admin@konecta.com",
-     "password": "Admin@123456"
-   }
-   ```
-3. Copy the `accessToken` from the response.
-4. Click the 🔓 **Authorize** button → paste `Bearer <token>` → Authorize.
+**Built with ❤️ by the Konecta ERP Team**
 
-You now have full access to protected endpoints across microservices via the gateway.
+[⭐ Star us on GitHub](https://github.com/Konecta-ERP-Cycle-3/erb_full_project)
 
----
-
-## 9. Creating & Onboarding Employees
-
-1. **Create employee (HR Service)**
-   - Go to http://localhost:8080/swagger/hr
-   - Call `POST /api/employees` with payload similar to:
-     ```json
-     {
-       "firstName": "ahmed",
-       "lastName": "mohamed",
-       "workEmail": "ahmed@konecta.com",
-       "personalEmail": "personal email",
-       "phoneNumber": "+201273400173",
-       "position": "Software Engineer",
-       "departmentId": "select a valid departmnet id "
-       "hireDate": "2025-01-10T00:00:00Z",
-       "salary": 50000.00
-     }
-     ```
-2. **Account provisioning**
-   - Authentication Service consumes the employee-created event, creates an identity user, and sends credentials via SendGrid (or MailHog in local development).
-3. **Retrieve credentials**
-   - If using SendGrid, check the employee’s email inbox.
-   - For local testing, open MailHog at http://localhost:8025 to view the welcome email and temporary password.
-
----
-
-## 10. Employee Login & Password Change
-
-1. **Employee login**
-   - Visit http://localhost:8080/swagger/authentication
-   - Call `POST /api/auth/login` with the work email and temporary password from the welcome email.
-2. **Change password immediately**
-   - After authorizing with the token, call `PUT /api/auth/update-password`:
-     ```json
-     {
-       "oldPassword": "<temporary-password>",
-       "newPassword": "NewSecure@Password123",
-       "confirmPassword": "NewSecure@Password123"
-     }
-     ```
-   - The Authorization header must be in the format `Bearer <token>`.
-3. **Re-login** using the new password to confirm the change.
-
----
-
-## 11. Troubleshooting & Useful Commands
-
-| Scenario | Command / Action |
-|----------|------------------|
-| View running containers | `docker compose ps` |
-| Follow logs for all services | `docker compose logs -f` |
-| Tail specific service logs | `docker compose logs -f authentication-service` |
-| Rebuild a single service | `docker compose build authentication-service && docker compose up -d authentication-service` |
-| Rerun SQL seeds | See commands in section 5 |
-| Check MailHog emails | http://localhost:8025 |
-| Check RabbitMQ queues | http://localhost:15672 (guest/guest) |
-
-**Common issues:**
-
-- *Missing Bearer prefix*: All authenticated calls must send `Authorization: Bearer <token>`.
-- *Email not received*: Verify SendGrid API key or use MailHog for local captures.
-- *Database mismatch*: Rerun seed scripts after deleting mismatched records.
-- *Stale JWT claims*: Logout/login again after updating roles/permissions.
-
----
-
-## 12. Stopping & Cleaning Up
-
-- Stop containers without removing data:
-  ```powershell
-  docker compose down
-  ```
-
-- Stop and remove volumes (WARNING: wipes SQL data):
-  ```powershell
-  docker compose down -v
-  ```
-
----
-
-## 13. Next Steps & Customization
-
-- Tailor `application.yml` under `backend/ApiGateWay` to expose additional routes or tweak CORS/security.
-- Update configuration in the Spring Cloud Config repo (`backend/config`) to change environment settings without rebuilding containers.
-- Extend SQL seed scripts under `docker/sqlserver` for additional roles, permissions, or demo data.
-
-For development-specific workflows (debugging individual services, unit tests, etc.) refer to each service’s README or project file.
-
----
-
-Happy coding! 🚀 If you encounter issues, check logs first and ensure Docker resources are sufficient.
-
-Check out TEAM_GUIDE in Docs
+</div>
