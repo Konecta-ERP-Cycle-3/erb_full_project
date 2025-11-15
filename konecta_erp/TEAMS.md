@@ -219,5 +219,5 @@ This document outlines the team structure and contributions for the Konecta ERP 
 
 ---
 
-**Last Updated**: November 2024  
+**Last Updated**: November 2025  
 **Total Contributors**: 26 team members across 9 teams

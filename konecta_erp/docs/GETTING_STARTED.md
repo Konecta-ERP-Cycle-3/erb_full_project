@@ -333,5 +333,5 @@ Now that you have Konecta ERP running:
 
 ---
 
-**Last Updated**: November 2024
+**Last Updated**: November 2025
 
