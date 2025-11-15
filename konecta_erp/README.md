@@ -1,6 +1,17 @@
-# Konecta ERP – Local Development Guide
+# Konecta ERP – Enterprise Resource Planning System
 
-This document walks you through everything required to run Konecta ERP locally: configuring environment variables, starting the Docker stack, seeding the databases, accessing Swagger portals through the API Gateway, logging in as the seeded admin, and onboarding new employees.
+Welcome to Konecta ERP! This is a comprehensive Enterprise Resource Planning system built with microservices architecture, integrating HR, Finance, Inventory, and Reporting modules.
+
+## 📚 Documentation
+
+- **[Complete Project Documentation](docs/PROJECT_DOCUMENTATION.md)** - Comprehensive guide covering architecture, setup, development, deployment, and more
+- **[CI/CD Quick Start](devops/CI_CD_QUICK_START.md)** - Quick guide for setting up CI/CD pipeline
+- **[Secrets Setup Guide](devops/SECRETS_SETUP.md)** - Detailed guide for configuring GitHub secrets
+- **[Team Collaboration Guide](docs/TEAM_GUIDE.md)** - Team workflow and collaboration guidelines
+
+## 🚀 Quick Start
+
+This document provides a quick guide to get started with Konecta ERP locally. For complete documentation, see [PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).
 
 ---
 
