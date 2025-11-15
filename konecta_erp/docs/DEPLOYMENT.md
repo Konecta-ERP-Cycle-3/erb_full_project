@@ -229,11 +229,20 @@ aws ecs create-service \
 
 The intended workflow would:
 
-1. **Test** - Run all tests ✅ (Currently working)
-2. **Build** - Build Docker images ✅ (Currently working)
-3. **Push to ECR** - Push to AWS ECR ⚠️ (Would use ECR instead of Docker Hub)
-4. **Deploy to EC2** - Deploy to EC2 for testing ⚠️ (Not configured)
-5. **Deploy to ECS** - Deploy to ECS for production ⚠️ (Not configured)
+1. **Security Scan** - Semgrep security and code quality scanning ✅ (Currently working)
+2. **Test** - Run all tests ✅ (Currently working)
+3. **Build** - Build Docker images ✅ (Currently working)
+4. **Push to ECR** - Push to AWS ECR ⚠️ (Would use ECR instead of Docker Hub)
+5. **Deploy to EC2** - Deploy to EC2 for testing ⚠️ (Not configured)
+6. **Deploy to ECS** - Deploy to ECS for production ⚠️ (Not configured)
+
+#### Security Scanning with Semgrep
+
+The pipeline includes automated security scanning using Semgrep:
+- **Scans for**: Security vulnerabilities, OWASP Top 10 issues, code quality
+- **Languages**: C#, Java, JavaScript, TypeScript
+- **Reports**: SARIF format uploaded to GitHub Security tab
+- **Status**: ✅ Working - Runs on every push and PR
 
 ### Required GitHub Secrets (Placeholders)
 
