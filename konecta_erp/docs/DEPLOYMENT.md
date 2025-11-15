@@ -2,319 +2,319 @@
 
 Complete guide for deploying Konecta ERP to production environments.
 
-> **⚠️ Deployment Status Note**: The cloud deployment process was not fully completed due to infrastructure challenges encountered by the Cloud team. The CI/CD pipeline includes deployment steps, but the actual cloud deployment to AWS EC2 is currently incomplete. This documentation describes the intended deployment process. For local development and testing, all services can be run successfully using Docker Compose.
+> **⚠️ Deployment Status Note**: The cloud deployment process was not fully completed due to the lack of AWS account access. Without AWS credentials, we were unable to proceed with cloud infrastructure setup. This documentation describes the **intended deployment strategy** that would have been implemented:
+> - **Testing Phase**: Deploy to AWS EC2 instances for testing and validation
+> - **Production Phase**: Deploy to AWS ECS (Elastic Container Service) for production
+> - **Image Registry**: Use AWS ECR (Elastic Container Registry) instead of Docker Hub
+> 
+> For local development and testing, all services can be run successfully using Docker Compose.
+
+---
+
+## 🎯 Intended Deployment Strategy
+
+### Two-Phase Deployment Approach
+
+#### Phase 1: Testing on EC2
+- Deploy to EC2 instances for testing and validation
+- Validate all services work correctly in cloud environment
+- Test integration between services
+- Performance testing and optimization
+
+#### Phase 2: Production on ECS
+- Deploy to AWS ECS for production
+- Auto-scaling and load balancing
+- High availability and fault tolerance
+- Production-grade monitoring and logging
+
+### Image Registry Strategy
+
+**Intended**: AWS ECR (Elastic Container Registry)
+- Private container registry within AWS
+- Integrated with ECS for seamless deployment
+- Better security and access control
+- Cost-effective for AWS-native deployments
+
+**Current**: Docker Hub (fallback for local development)
 
 ---
 
 ## 📋 Prerequisites
 
-- **Docker** and **Docker Compose** installed
-- **AWS EC2** instance (or similar cloud provider)
-- **Docker Hub** account for image registry
-- **GitHub Actions** configured (for CI/CD)
-- **SSH access** to deployment server
+### Required AWS Resources (Not Configured)
+
+- **AWS Account** - Required for cloud deployment
+- **AWS ECR Repository** - For container image storage
+- **AWS EC2 Instances** - For testing phase
+- **AWS ECS Cluster** - For production deployment
+- **AWS VPC** - Virtual Private Cloud for networking
+- **AWS Security Groups** - For network security
+- **AWS IAM Roles** - For service permissions
+
+### Required Credentials (Placeholders)
+
+The following AWS credentials would be needed but are not configured:
+
+| Credential | Purpose | Status |
+|------------|---------|--------|
+| `AWS_ACCOUNT_ID` | AWS account identifier | ⚠️ Not configured |
+| `AWS_ACCESS_KEY_ID` | Programmatic access | ⚠️ Not configured |
+| `AWS_SECRET_ACCESS_KEY` | Secret access key | ⚠️ Not configured |
+| `AWS_REGION` | Deployment region | ⚠️ Not configured |
+| `ECR_REPOSITORY_URI` | ECR repository URL | ⚠️ Not configured |
+| `ECS_CLUSTER_NAME` | ECS cluster name | ⚠️ Not configured |
+| `ECS_SERVICE_NAME` | ECS service name | ⚠️ Not configured |
+| `EC2_INSTANCE_IDS` | EC2 instance IDs for testing | ⚠️ Not configured |
+| `VPC_ID` | Virtual Private Cloud ID | ⚠️ Not configured |
+| `SUBNET_IDS` | Subnet IDs for ECS | ⚠️ Not configured |
+| `SECURITY_GROUP_IDS` | Security group IDs | ⚠️ Not configured |
 
 ---
 
-## 🚀 Quick Deployment
+## 🚀 Intended Deployment Process
 
-### Step 1: Prepare EC2 Instance
+### Phase 1: Testing on EC2
 
-1. **Launch EC2 instance** (Ubuntu 22.04 or Amazon Linux 2023)
-2. **Install Docker**:
+#### Step 1: Setup AWS ECR
+
+1. **Create ECR Repository**:
    ```bash
-   # Ubuntu
-   sudo apt-get update
-   sudo apt-get install docker.io -y
-   sudo systemctl start docker
-   sudo systemctl enable docker
-   sudo usermod -aG docker ubuntu
+   aws ecr create-repository --repository-name konecta-erp/authentication-service --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/hr-service --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/finance-service --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/inventory-service --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/user-management-service --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/api-gateway --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/reporting-service --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/config-server --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/hr-model --region us-east-1
+   aws ecr create-repository --repository-name konecta-erp/prophet-model --region us-east-1
+   ```
+
+2. **Get ECR Login Token**:
+   ```bash
+   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+   ```
+
+#### Step 2: Build and Push to ECR
+
+Images would be built and pushed to ECR instead of Docker Hub:
+
+```bash
+# Example for authentication service
+docker build -t konecta-erp/authentication-service:latest ./backend/AuthenticationService
+docker tag konecta-erp/authentication-service:latest <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/konecta-erp/authentication-service:latest
+docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/konecta-erp/authentication-service:latest
+```
+
+#### Step 3: Deploy to EC2 for Testing
+
+1. **Launch EC2 Instances**:
+   - Multiple instances for different services
+   - Configure security groups
+   - Set up networking
+
+2. **Deploy Services**:
+   ```bash
+   # Pull images from ECR
+   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+   docker pull <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/konecta-erp/authentication-service:latest
    
-   # Install Docker Compose
-   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-   sudo chmod +x /usr/local/bin/docker-compose
+   # Run services
+   docker-compose -f docker-compose.ec2-test.yml up -d
    ```
 
-3. **Configure Security Group**:
-   - Allow SSH (22) - from your IP
-   - Allow HTTP (80) - from 0.0.0.0/0
-   - Allow HTTPS (443) - from 0.0.0.0/0
-   - Allow API Gateway (8080) - from 0.0.0.0/0
-   - Allow Management UIs (15672, 8500) - restrict to your IP
+3. **Validate and Test**:
+   - Test all API endpoints
+   - Verify service communication
+   - Performance testing
+   - Load testing
 
-### Step 2: Deploy Application
+### Phase 2: Production on ECS
 
-1. **Copy files to EC2**:
-   ```bash
-   scp -i key.pem docker-compose.prod.yml ubuntu@ec2-ip:/opt/konecta-erp/
-   scp -i key.pem -r docker/ ubuntu@ec2-ip:/opt/konecta-erp/
-   ```
+#### Step 1: Create ECS Cluster
 
-2. **SSH into EC2**:
-   ```bash
-   ssh -i key.pem ubuntu@ec2-ip
-   ```
+```bash
+aws ecs create-cluster --cluster-name konecta-erp-production --region us-east-1
+```
 
-3. **Login to Docker Hub**:
-   ```bash
-   docker login -u your-username
-   ```
+#### Step 2: Create ECS Task Definitions
 
-4. **Update docker-compose.prod.yml** with your Docker Hub username
+Each service would have a task definition:
 
-5. **Start services**:
-   ```bash
-   cd /opt/konecta-erp
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
+```json
+{
+  "family": "konecta-erp-authentication-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "containerDefinitions": [{
+    "name": "authentication-service",
+    "image": "<AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/konecta-erp/authentication-service:latest",
+    "portMappings": [{
+      "containerPort": 7280,
+      "protocol": "tcp"
+    }],
+    "environment": [
+      {"name": "ASPNETCORE_ENVIRONMENT", "value": "Production"}
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/konecta-erp",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }]
+}
+```
 
-6. **Verify deployment**:
-   ```bash
-   docker-compose ps
-   curl http://localhost:8080/actuator/health
-   ```
+#### Step 3: Create ECS Services
+
+```bash
+aws ecs create-service \
+  --cluster konecta-erp-production \
+  --service-name authentication-service \
+  --task-definition konecta-erp-authentication-service \
+  --desired-count 2 \
+  --launch-type FARGATE \
+  --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}"
+```
+
+#### Step 4: Setup Application Load Balancer
+
+- Create ALB for API Gateway
+- Configure target groups
+- Set up health checks
+- Configure SSL/TLS certificates
 
 ---
 
 ## 🔧 Production Configuration
 
-### Environment Variables
+### ECS Task Definition Environment Variables
 
-Set environment variables in `docker-compose.prod.yml`:
-
-```yaml
-environment:
-  ASPNETCORE_ENVIRONMENT: Production
-  ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=Konecta_Auth;..."
-  JwtOptions__SecretKey: "your-production-secret-key"
-  RabbitMq__HostName: "rabbitmq"
-  RabbitMq__Port: "5672"
+```json
+{
+  "environment": [
+    {"name": "ASPNETCORE_ENVIRONMENT", "value": "Production"},
+    {"name": "ConnectionStrings__DefaultConnection", "value": "Server=rds-endpoint;Database=Konecta_Auth;..."},
+    {"name": "RabbitMq__HostName", "value": "rabbitmq-service"},
+    {"name": "JwtOptions__SecretKey", "value": "from-secrets-manager"}
+  ],
+  "secrets": [
+    {
+      "name": "JwtOptions__SecretKey",
+      "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT_ID:secret:konecta/jwt-secret"
+    }
+  ]
+}
 ```
 
-### Docker Compose Production
+### Infrastructure Components
 
-Use `docker-compose.prod.yml` which:
-- Uses Docker Hub images instead of building locally
-- Includes production configurations
-- Sets up proper networking
-- Configures health checks
+- **RDS** - Managed SQL Server database
+- **ElastiCache** - Redis for caching
+- **S3** - Object storage for artifacts
+- **CloudWatch** - Logging and monitoring
+- **Secrets Manager** - Secure credential storage
 
 ---
 
-## 🔄 CI/CD Deployment
+## 🔄 CI/CD Pipeline (Intended)
 
-### GitHub Actions Setup
+### GitHub Actions Workflow
 
-The CI/CD pipeline automatically:
-1. **Tests** - Runs all tests ✅
-2. **Builds** - Builds Docker images (including AI models) ✅
-3. **Pushes** - Pushes to Docker Hub ✅
-4. **Deploys** - Deploys to EC2 ⚠️ (Not fully completed)
+The intended workflow would:
 
-> **⚠️ Deployment Status**: The cloud deployment to AWS EC2 was not fully completed due to infrastructure challenges encountered during setup. The CI/CD pipeline successfully builds and pushes all Docker images (including AI/ML models) to Docker Hub, but the actual deployment step may fail or be skipped. The workflow is configured to continue even if deployment fails (`continue-on-error: true`), ensuring that image builds and pushes complete successfully.
+1. **Test** - Run all tests ✅ (Currently working)
+2. **Build** - Build Docker images ✅ (Currently working)
+3. **Push to ECR** - Push to AWS ECR ⚠️ (Would use ECR instead of Docker Hub)
+4. **Deploy to EC2** - Deploy to EC2 for testing ⚠️ (Not configured)
+5. **Deploy to ECS** - Deploy to ECS for production ⚠️ (Not configured)
 
-### Required Secrets
+### Required GitHub Secrets (Placeholders)
 
-Configure in GitHub → Settings → Secrets:
-
-| Secret | Description |
-|--------|------------|
-| `DOCKER_USERNAME` | Docker Hub username |
-| `DOCKER_PASSWORD` | Docker Hub access token |
-| `AWS_ACCESS_KEY_ID` | AWS access key |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key |
-| `AWS_REGION` | AWS region |
-| `EC2_HOST` | EC2 instance IP/DNS |
-| `EC2_USER` | SSH username (ubuntu/ec2-user) |
-| `EC2_SSH_PRIVATE_KEY` | SSH private key content |
-
-See [Secrets Setup Guide](../devops/SECRETS_SETUP.md) for detailed instructions.
-
-### Pipeline Triggers
-
-- **Push to `main`**: Full pipeline (test, build, push, deploy)
-- **Push to `develop`**: Test and build only
-- **Pull Request**: Test only
+| Secret | Description | Status |
+|--------|-------------|--------|
+| `AWS_ACCOUNT_ID` | AWS account ID | ⚠️ Not configured |
+| `AWS_ACCESS_KEY_ID` | AWS access key | ⚠️ Not configured |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key | ⚠️ Not configured |
+| `AWS_REGION` | AWS region (e.g., us-east-1) | ⚠️ Not configured |
+| `ECR_REPOSITORY_URI` | ECR repository base URI | ⚠️ Not configured |
+| `ECS_CLUSTER_NAME` | ECS cluster name | ⚠️ Not configured |
+| `ECS_SERVICE_NAME` | ECS service name | ⚠️ Not configured |
+| `VPC_ID` | VPC ID for ECS | ⚠️ Not configured |
+| `SUBNET_IDS` | Comma-separated subnet IDs | ⚠️ Not configured |
+| `SECURITY_GROUP_IDS` | Comma-separated security group IDs | ⚠️ Not configured |
+| `EC2_HOST` | EC2 instance IP/DNS (for testing) | ⚠️ Not configured |
+| `EC2_USER` | SSH username | ⚠️ Not configured |
+| `EC2_SSH_PRIVATE_KEY` | SSH private key | ⚠️ Not configured |
 
 ---
 
-## 📊 Monitoring
+## 📊 Monitoring & Logging (Intended)
 
-### Health Checks
+### CloudWatch Integration
 
-All services include health check endpoints:
+- **Logs**: All container logs to CloudWatch Logs
+- **Metrics**: Service metrics and custom metrics
+- **Alarms**: Automated alerts for issues
+- **Dashboards**: Visual monitoring dashboards
 
-```bash
-# API Gateway
-curl http://localhost:8080/actuator/health
+### Application Load Balancer
 
-# Individual services
-curl http://localhost:7280/health  # Authentication
-curl http://localhost:5005/health   # HR
-```
-
-### Logs
-
-View logs for monitoring:
-
-```bash
-# All services
-docker-compose logs -f
-
-# Specific service
-docker-compose logs -f authentication-service
-
-# Last 100 lines
-docker-compose logs --tail=100 authentication-service
-```
-
-### Service Discovery
-
-Check service health via Consul:
-- **Consul UI**: http://your-server:8500
-- View registered services and health status
+- Health checks for all services
+- SSL/TLS termination
+- Request routing
+- Access logs
 
 ---
 
-## 🔐 Security Best Practices
+## 🔐 Security (Intended)
 
-### 1. Secrets Management
+### IAM Roles
 
-- Never commit secrets to repository
-- Use environment variables or secrets manager
-- Rotate secrets regularly
+- ECS Task Execution Role
+- ECS Task Role
+- EC2 Instance Role
 
-### 2. Network Security
+### Secrets Management
 
-- Use private networks for services
-- Expose only necessary ports
-- Use firewall rules
+- AWS Secrets Manager for sensitive data
+- Encrypted environment variables
+- Secure credential rotation
 
-### 3. SSL/TLS
+### Network Security
 
-- Enable HTTPS in production
-- Use reverse proxy (Nginx/Traefik)
-- Configure SSL certificates
-
-### 4. Database Security
-
-- Use strong passwords
-- Restrict database access
-- Enable encryption at rest
-
-### 5. Container Security
-
-- Use official base images
-- Keep images updated
-- Scan for vulnerabilities
-
----
-
-## 🔄 Updates and Rollbacks
-
-### Updating Services
-
-1. **Pull latest images**:
-   ```bash
-   docker-compose pull
-   ```
-
-2. **Restart services**:
-   ```bash
-   docker-compose up -d
-   ```
-
-3. **Verify health**:
-   ```bash
-   docker-compose ps
-   curl http://localhost:8080/actuator/health
-   ```
-
-### Rolling Back
-
-1. **Check previous image tags**:
-   ```bash
-   docker images
-   ```
-
-2. **Update docker-compose.prod.yml** with previous tag
-
-3. **Restart services**:
-   ```bash
-   docker-compose up -d
-   ```
-
----
-
-## 📈 Scaling
-
-### Horizontal Scaling
-
-Scale services independently:
-
-```bash
-# Scale HR service to 3 instances
-docker-compose up -d --scale hr-service=3
-```
-
-### Load Balancing
-
-API Gateway automatically load balances requests across service instances.
-
-### Database Scaling
-
-- Use read replicas for read-heavy workloads
-- Consider database sharding for large datasets
-- Implement connection pooling
-
----
-
-## 🗄️ Database Management
-
-### Backups
-
-```bash
-# Backup SQL Server databases
-docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost -U sa -P "password" \
-  -Q "BACKUP DATABASE Konecta_Auth TO DISK = '/backup/auth.bak'"
-```
-
-### Restore
-
-```bash
-# Restore from backup
-docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S localhost -U sa -P "password" \
-  -Q "RESTORE DATABASE Konecta_Auth FROM DISK = '/backup/auth.bak'"
-```
+- VPC with private subnets
+- Security groups
+- Network ACLs
+- WAF for API protection
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Services Not Starting
+### Common Issues (If Deployment Was Completed)
 
-1. Check logs: `docker-compose logs <service-name>`
-2. Verify resources (CPU/RAM)
-3. Check dependencies are running
-4. Verify configuration
+1. **ECR Authentication Failed**
+   - Verify AWS credentials
+   - Check IAM permissions
+   - Verify ECR repository exists
 
-### Database Connection Issues
+2. **ECS Service Not Starting**
+   - Check task definition
+   - Verify image exists in ECR
+   - Check security group rules
+   - Review CloudWatch logs
 
-1. Verify SQL Server is running
-2. Check connection strings
-3. Verify network connectivity
-4. Check firewall rules
-
-### High Memory Usage
-
-1. Monitor container resources
-2. Scale services horizontally
-3. Optimize application code
-4. Increase server resources
-
-For more troubleshooting, see [Troubleshooting Guide](../devops/TROUBLESHOOTING.md).
+3. **EC2 Connection Issues**
+   - Verify security group allows SSH
+   - Check key pair configuration
+   - Verify instance is running
 
 ---
 
@@ -327,5 +327,36 @@ For more troubleshooting, see [Troubleshooting Guide](../devops/TROUBLESHOOTING.
 
 ---
 
-**Last Updated**: November 2025
+## 📝 Summary
 
+### What Was Intended
+
+- ✅ **Image Registry**: AWS ECR (Elastic Container Registry)
+- ✅ **Testing**: AWS EC2 instances
+- ✅ **Production**: AWS ECS (Elastic Container Service)
+- ✅ **Two-Phase Deployment**: Test on EC2, then deploy to ECS
+
+### Current Status
+
+- ⚠️ **AWS Account**: Not available
+- ⚠️ **ECR Setup**: Not configured
+- ⚠️ **EC2 Deployment**: Not completed
+- ⚠️ **ECS Deployment**: Not completed
+- ✅ **Local Development**: Fully functional with Docker Compose
+- ✅ **CI/CD Pipeline**: Builds and tests work, deployment steps are placeholders
+
+### Next Steps (If AWS Access Becomes Available)
+
+1. Create AWS account and set up IAM
+2. Create ECR repositories for all services
+3. Update CI/CD pipeline to use ECR
+4. Set up EC2 instances for testing
+5. Deploy and test on EC2
+6. Create ECS cluster and services
+7. Deploy to ECS for production
+8. Configure monitoring and logging
+
+---
+
+**Last Updated**: November 2025  
+**Deployment Status**: Intended strategy documented, not implemented due to lack of AWS access
