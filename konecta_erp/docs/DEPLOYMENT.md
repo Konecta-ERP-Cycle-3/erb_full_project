@@ -106,10 +106,12 @@ Use `docker-compose.prod.yml` which:
 ### GitHub Actions Setup
 
 The CI/CD pipeline automatically:
-1. **Tests** - Runs all tests
-2. **Builds** - Builds Docker images
-3. **Pushes** - Pushes to Docker Hub
-4. **Deploys** - Deploys to EC2
+1. **Tests** - Runs all tests ✅
+2. **Builds** - Builds Docker images (including AI models) ✅
+3. **Pushes** - Pushes to Docker Hub ✅
+4. **Deploys** - Deploys to EC2 ⚠️ (Not fully completed)
+
+> **⚠️ Deployment Status**: The cloud deployment to AWS EC2 was not fully completed due to infrastructure challenges encountered during setup. The CI/CD pipeline successfully builds and pushes all Docker images (including AI/ML models) to Docker Hub, but the actual deployment step may fail or be skipped. The workflow is configured to continue even if deployment fails (`continue-on-error: true`), ensuring that image builds and pushes complete successfully.
 
 ### Required Secrets
 
