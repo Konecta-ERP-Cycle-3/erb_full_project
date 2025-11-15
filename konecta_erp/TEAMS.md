@@ -23,12 +23,14 @@ This document outlines the team structure and contributions for the Konecta ERP 
 - ✅ Reporting Service (Spring Boot)
 - ✅ Angular Frontend Application
 - ✅ API Gateway Configuration
+- ✅ Docker containerization (Dockerfiles for all services)
+- ✅ Docker Compose configurations
 
 ---
 
 ### 🔧 DevOps Team
 
-**Primary Responsibilities**: CI/CD pipelines, Docker containerization, deployment automation
+**Primary Responsibilities**: CI/CD pipelines, deployment automation, infrastructure automation
 
 **Team Members**:
 - **Tarek Adel** - tarekadel314@gmail.com
@@ -37,11 +39,11 @@ This document outlines the team structure and contributions for the Konecta ERP 
 
 **Key Contributions**:
 - ✅ GitHub Actions CI/CD Pipelines
-- ✅ Docker Compose configurations
 - ✅ Deployment scripts and automation
 - ✅ Environment setup documentation
 - ✅ Secrets management
 - ✅ Infrastructure automation
+- ✅ Security scanning integration (Semgrep)
 
 ---
 
@@ -174,7 +176,7 @@ This document outlines the team structure and contributions for the Konecta ERP 
 - ✅ Integrated multiple technology stacks (.NET 9 & Spring Boot 3.2)
 - ✅ Set up event-driven communication with RabbitMQ
 - ✅ Implemented comprehensive CI/CD pipeline with GitHub Actions
-- ✅ Containerized all services with Docker
+- ✅ Containerized all services with Docker (Fullstack Team)
 - ✅ Implemented service discovery with Consul
 - ✅ Developed AI/ML models for HR predictions and forecasting
 
