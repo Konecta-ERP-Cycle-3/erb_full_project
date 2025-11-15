@@ -1,3 +1,0 @@
-# Konecta ERP
-
-test sync
