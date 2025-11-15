@@ -11,7 +11,12 @@ This workflow automates:
 - ✅ **Pushing**: Pushes images to Docker Hub
 - ⚠️ **Deploying**: Cloud deployment to AWS EC2 (not fully completed - see note below)
 
-> **⚠️ Deployment Status**: The cloud deployment process was not fully completed due to infrastructure challenges. The deployment job in the pipeline is configured with `continue-on-error: true` to allow the workflow to complete even if deployment fails. All Docker images are successfully built and pushed to Docker Hub, but the actual cloud deployment requires additional infrastructure configuration.
+> **⚠️ Deployment Status**: The cloud deployment process was not fully completed due to lack of AWS account access. The intended deployment strategy was:
+> - **Image Registry**: AWS ECR (Elastic Container Registry) - currently using Docker Hub as fallback
+> - **Testing Phase**: Deploy to AWS EC2 instances for testing and validation
+> - **Production Phase**: Deploy to AWS ECS (Elastic Container Service) for production
+> 
+> The deployment job in the pipeline is configured with `continue-on-error: true` to allow the workflow to complete even if deployment fails. All Docker images are successfully built and pushed (currently to Docker Hub, but ECR was intended).
 
 ### 2. Deployment Script
 **File**: `devops/scripts/deploy.sh`
