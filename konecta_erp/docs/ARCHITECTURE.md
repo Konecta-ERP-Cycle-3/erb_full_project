@@ -417,6 +417,6 @@ docker run mohamed710/prophet-image:latest
 
 ---
 
-**Last Updated**: November 2024  
+**Last Updated**: November 2025  
 **Architecture Version**: 1.0
 

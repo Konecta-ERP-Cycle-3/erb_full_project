@@ -358,6 +358,6 @@ Before submission, ensure you can answer:
 
 ---
 
-**Last Updated**: November 2024  
+**Last Updated**: November 2025  
 **Status**: Pre-Submission Review
 
