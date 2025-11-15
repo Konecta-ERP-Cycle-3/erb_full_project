@@ -2,6 +2,8 @@
 
 Complete guide for deploying Konecta ERP to production environments.
 
+> **⚠️ Deployment Status Note**: The cloud deployment process was not fully completed due to infrastructure challenges encountered by the Cloud team. The CI/CD pipeline includes deployment steps, but the actual cloud deployment to AWS EC2 is currently incomplete. This documentation describes the intended deployment process. For local development and testing, all services can be run successfully using Docker Compose.
+
 ---
 
 ## 📋 Prerequisites
