@@ -291,6 +291,52 @@ Each microservice has its own database, ensuring data isolation and independent 
 
 ---
 
+## 🤖 AI/ML Components
+
+### HR Prediction Model (XGBoost)
+
+**Location**: `Ai/artifacts/hr_model/`
+
+**Components**:
+- `hr_xgb_model.pkl` - Trained XGBoost model
+- `hr_scaler.pkl` - Feature scaler
+- `hr_feature_columns.csv` - Feature columns
+- `Dockerfile` - Container configuration
+
+**Purpose**: Predicts HR-related metrics and outcomes
+
+**Deployment**:
+```bash
+docker pull mohamed710/hr-image:latest
+docker run mohamed710/hr-image:latest
+```
+
+### Prophet Forecasting Model
+
+**Location**: `Ai/artifacts/prophet_model/`
+
+**Components**:
+- `prophet_model.pkl` - Trained Prophet model
+- `prophet_forecast.csv` - Forecast results
+- `Dockerfile` - Container configuration
+
+**Purpose**: Time series forecasting for business metrics
+
+**Deployment**:
+```bash
+docker pull mohamed710/prophet-image:latest
+docker run mohamed710/prophet-image:latest
+```
+
+### AI/ML Integration
+
+- Models are containerized for easy deployment
+- Can be integrated with Reporting Service
+- Used for predictive analytics and forecasting
+- Supports HR predictions and business forecasting
+
+---
+
 ## 🔍 Design Patterns
 
 ### Patterns Used
@@ -371,6 +417,6 @@ Each microservice has its own database, ensuring data isolation and independent 
 
 ---
 
-**Last Updated**: January 2025  
+**Last Updated**: November 2024  
 **Architecture Version**: 1.0
 

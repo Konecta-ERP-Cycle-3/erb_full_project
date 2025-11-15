@@ -247,7 +247,17 @@ konecta_erp/
 │   ├── config/                 # Config server
 │   └── SharedContracts/       # Shared contracts
 ├── frontend/                   # Angular application
-├── Ai/                         # ML models and artifacts
+├── Ai/                         # AI/ML Models and Artifacts
+│   └── artifacts/
+│       ├── hr_model/           # HR Prediction Model (XGBoost)
+│       │   ├── hr_xgb_model.pkl
+│       │   ├── hr_scaler.pkl
+│       │   ├── hr_feature_columns.csv
+│       │   └── Dockerfile
+│       └── prophet_model/      # Prophet Forecasting Model
+│           ├── prophet_model.pkl
+│           ├── prophet_forecast.csv
+│           └── Dockerfile
 ├── devops/                     # CI/CD and deployment
 │   ├── scripts/                # Deployment scripts
 │   └── *.md                    # DevOps documentation
