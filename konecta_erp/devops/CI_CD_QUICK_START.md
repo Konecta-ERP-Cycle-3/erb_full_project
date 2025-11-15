@@ -7,9 +7,11 @@
 
 This workflow automates:
 - ✅ **Testing**: Runs tests for all .NET services, Java services, and frontend
-- ✅ **Building**: Builds Docker images for all 8 services
+- ✅ **Building**: Builds Docker images for all services (8 microservices + 2 AI models)
 - ✅ **Pushing**: Pushes images to Docker Hub
-- ✅ **Deploying**: Deploys to AWS EC2 automatically
+- ⚠️ **Deploying**: Cloud deployment to AWS EC2 (not fully completed - see note below)
+
+> **⚠️ Deployment Status**: The cloud deployment process was not fully completed due to infrastructure challenges. The deployment job in the pipeline is configured with `continue-on-error: true` to allow the workflow to complete even if deployment fails. All Docker images are successfully built and pushed to Docker Hub, but the actual cloud deployment requires additional infrastructure configuration.
 
 ### 2. Deployment Script
 **File**: `devops/scripts/deploy.sh`
@@ -20,6 +22,8 @@ A bash script that:
 - Manages container lifecycle (stop, pull, start)
 - Performs health checks
 - Creates backups before deployment
+
+> **Note**: This script is included but deployment was not fully completed due to cloud infrastructure challenges.
 
 ### 3. Production Docker Compose
 **File**: `docker-compose.prod.yml`
