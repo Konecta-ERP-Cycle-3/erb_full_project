@@ -53,7 +53,11 @@ Built using a **microservices architecture** with .NET and Spring Boot, ensuring
 - ⚙️ **Centralized Configuration** - Spring Cloud Config Server
 - 🐳 **Dockerized** - Complete containerization with Docker Compose
 - 📱 **Modern Frontend** - Angular 19 with PrimeNG
-- 🤖 **AI/ML Integration** - HR prediction and forecasting models
+- 🤖 **AI/ML Integration**
+  - HR predictive analytics  
+  - Prophet forecasting models  
+  - Chatbot using RAG  
+  - Invoice OCR extraction module
 - 🚀 **CI/CD Pipeline** - Automated testing, building, and deployment
 
 ---
