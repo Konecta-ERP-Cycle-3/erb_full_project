@@ -30,7 +30,11 @@ Konecta ERP is a comprehensive **Enterprise Resource Planning system** built wit
 - 📦 **Inventory Management** - Product catalog and stock tracking
 - 👤 **User Management** - Role-based access control and permissions
 - 📊 **Reporting & Analytics** - Cross-service reporting and insights
-- 🤖 **AI/ML Integration** - Predictive models for HR and forecasting
+- 🤖 **AI/ML Integration**
+  - HR predictive analytics  
+  - Prophet forecasting models  
+  - Chatbot using RAG 
+  - Invoice OCR extraction module
 
 ---
 
