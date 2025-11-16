@@ -47,7 +47,7 @@ erb_full_project/
 ├── konecta_erp/          # Main project directory
 │   ├── backend/          # Microservices (.NET & Spring Boot)
 │   ├── frontend/         # Angular application
-│   ├── Ai/               # AI/ML models and artifacts
+│   ├── Ai/               # AI/ML models, artifacts, Chatbot using RAG, Invoice OCR extraction module
 │   ├── devops/           # CI/CD and deployment scripts
 │   ├── docker/           # Docker configurations
 │   └── docs/             # Comprehensive documentation
@@ -142,7 +142,7 @@ See [TEAMS.md](konecta_erp/TEAMS.md) for complete team information and contribut
 - **Total Team Members**: 26
 - **Total Teams**: 9 specialized teams
 - **Microservices**: 8 services
-- **AI/ML Models**: 2 models (HR Prediction, Prophet Forecasting)
+- **AI/ML Models**: 4 AI/ML production-ready models  
 - **Frontend**: Angular 19 application
 - **Documentation**: Comprehensive guides and references
 - **CI/CD**: Fully automated pipeline
@@ -158,7 +158,8 @@ See [TEAMS.md](konecta_erp/TEAMS.md) for complete team information and contribut
 - ✅ **Service Discovery** - Automatic service registration
 - ✅ **Docker Containerization** - Complete containerization
 - ✅ **CI/CD Pipeline** - Automated testing and building
-- ✅ **AI/ML Integration** - Predictive models
+- ✅ **AI/ML Integration** HR predictive analytics - Prophet forecasting models  
+  - Chatbot using RAG - Invoice OCR extraction module
 - ✅ **Comprehensive Documentation** - Complete guides and references
 
 ---
@@ -224,6 +225,8 @@ The project includes a comprehensive CI/CD pipeline:
 ### AI/ML
 - XGBoost - HR prediction model
 - Prophet - Time series forecasting
+- Chatbot using RAG 
+- Invoice OCR extraction module
 
 ---
 
@@ -232,8 +235,8 @@ The project includes a comprehensive CI/CD pipeline:
 ```
 erb_full_project/
 │
-├── konecta_erp/              # Main project
-│   ├── backend/              # Backend microservices
+├── konecta_erp/                  # Main project
+│   ├── backend/                  # Backend microservices
 │   │   ├── AuthenticationService/
 │   │   ├── HrService/
 │   │   ├── FinanceService/
@@ -242,22 +245,28 @@ erb_full_project/
 │   │   ├── ReportingService/
 │   │   ├── ApiGateWay/
 │   │   └── config/
-│   ├── frontend/             # Angular application
-│   ├── Ai/                   # AI/ML models
-│   │   └── artifacts/
-│   │       ├── hr_model/
-│   │       └── prophet_model/
-│   ├── devops/               # CI/CD and deployment
-│   ├── docker/               # Docker configurations
-│   ├── docs/                 # Documentation
-│   ├── docker-compose.yml    # Development environment
-│   └── README.md             # Main project README
+│   │
+│   ├── frontend/                 # Angular application
+│   │
+│   ├── Ai/                       # AI/ML models & utilities
+│   │   ├── artifacts/            # Prediction & forecasting models
+│   │   │   ├── hr_model/
+│   │   │   └── prophet_model/
+│   │   │
+│   │   ├── chatbot_erp/          #  RAG chatbot
+│   │   └── ocr/                  # Invoice OCR extraction
+│   │
+│   ├── devops/                   # CI/CD and deployment
+│   ├── docker/                   # Docker configurations
+│   ├── docs/                     # Documentation
+│   ├── docker-compose.yml        # Development environment
+│   └── README.md                 # Main project README
 │
-├── .github/                  # GitHub Actions workflows
+├── .github/                      # GitHub Actions workflows
 │   └── workflows/
 │       └── ci-cd-pipeline.yml
 │
-└── README.md                 # This file
+└── README.md                     # Repository-level README
 ```
 
 ---
@@ -269,7 +278,7 @@ erb_full_project/
 1. **Collaborative Development** - 26 team members across 9 specialized teams
 2. **Modern Architecture** - Microservices with event-driven communication
 3. **Technology Diversity** - Integration of .NET and Spring Boot
-4. **AI/ML Integration** - Predictive models for business intelligence
+4. **AI/ML Integration** - Predictive models for business intelligence, Q&A chatbot (RAG), and invoice OCR extraction
 5. **Comprehensive Documentation** - Complete guides and references
 6. **Production-Ready** - Docker containerization and CI/CD pipeline
 7. **Scalable Design** - Microservices architecture for independent scaling
