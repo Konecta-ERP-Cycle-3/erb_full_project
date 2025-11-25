@@ -66,6 +66,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: false  # Disable submodules to avoid warning
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -75,7 +77,11 @@ jobs:
       - name: Restore and Build ${{ matrix.service }}
         working-directory: konecta_erp
         run: |
+          # Ensure obj directory exists
+          mkdir -p backend/${{ matrix.service }}/obj
+          # Restore dependencies (generates project.assets.json)
           dotnet restore backend/${{ matrix.service }}/${{ matrix.service }}.csproj
+          # Build the project
           dotnet build backend/${{ matrix.service }}/${{ matrix.service }}.csproj -c Release
 
       - name: Run tests
