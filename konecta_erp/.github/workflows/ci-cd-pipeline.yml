@@ -81,16 +81,30 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      
-      - name: Restore all .NET projects
+      - name: Restore and build SharedContracts (common dependency)
         run: |
-          find konecta_erp/backend -name "*.csproj" -type f | while read proj; do
-            dotnet restore "$proj" || echo "Warning: Failed to restore $proj"
-          done
+          dotnet restore "konecta_erp/backend/SharedContracts/SharedContracts.csproj"
+          dotnet build "konecta_erp/backend/SharedContracts/SharedContracts.csproj" \
+            --configuration Release \
+            --no-restore
       
-      - name: Restore ${{ matrix.service }} (ensure assets file exists)
+      - name: Restore ${{ matrix.service }}
         run: |
           dotnet restore "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj"
+          
+      - name: Verify assets file exists for ${{ matrix.service }}
+        run: |
+          ASSETS_FILE="konecta_erp/backend/${{ matrix.service }}/obj/project.assets.json"
+          if [ ! -f "$ASSETS_FILE" ]; then
+            echo "Error: Assets file not found at $ASSETS_FILE"
+            echo "Attempting restore again..."
+            dotnet restore "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj" --verbosity detailed
+            if [ ! -f "$ASSETS_FILE" ]; then
+              echo "Error: Assets file still not found after second restore attempt"
+              exit 1
+            fi
+          fi
+          echo "Assets file found at $ASSETS_FILE"
 
       - name: Build ${{ matrix.service }}
         run: |
