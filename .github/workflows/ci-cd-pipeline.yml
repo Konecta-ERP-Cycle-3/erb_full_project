@@ -275,19 +275,19 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform Init
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: terraform init
 
       - name: Terraform Format Check
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: terraform fmt -check -recursive
 
       - name: Terraform Validate
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: |
           terraform plan -var-file=dev.tfvars -out=tfplan
         continue-on-error: true
