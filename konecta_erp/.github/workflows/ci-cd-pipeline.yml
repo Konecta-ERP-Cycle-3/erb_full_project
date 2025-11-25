@@ -53,7 +53,7 @@ jobs:
           echo "Semgrep security scan completed. Check the Security tab for detailed results."
 
   # Test .NET Services
-     test-dotnet-services:
+  test-dotnet-services:
     name: Test .NET Services (${{ matrix.service }})
     runs-on: ubuntu-latest
     strategy:
