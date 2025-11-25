@@ -297,7 +297,7 @@ jobs:
         if: always()
         with:
           name: terraform-plan
-          path: konecta_erp/cloud/ERP/tfplan
+          path: konecta_erp/terraform/ERP/tfplan
           retention-days: 5
 
   # Deploy to AWS ECS using Terraform
@@ -334,14 +334,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: terraform-plan
-          path: konecta_erp/cloud/ERP
+          path: konecta_erp/terraform/ERP
 
       - name: Terraform Init
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: |
           if [ -f tfplan ]; then
             terraform apply -auto-approve tfplan
@@ -351,7 +351,7 @@ jobs:
 
       - name: Get ALB URL
         id: get-alb-url
-        working-directory: konecta_erp/cloud/ERP
+        working-directory: konecta_erp/terraform/ERP
         run: |
           ALB_URL=$(terraform output -raw alb_dns_name 2>/dev/null || echo "")
           if [ -n "$ALB_URL" ]; then
