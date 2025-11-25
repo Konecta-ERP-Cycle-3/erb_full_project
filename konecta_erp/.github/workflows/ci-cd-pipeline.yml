@@ -53,7 +53,7 @@ jobs:
           echo "Semgrep security scan completed. Check the Security tab for detailed results."
 
   # Test .NET Services
-    test-dotnet-services:
+     test-dotnet-services:
     name: Test .NET Services (${{ matrix.service }})
     runs-on: ubuntu-latest
     strategy:
@@ -78,11 +78,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Restore Full Solution
-        run: dotnet restore konecta_erp/konecta_erp.sln || dotnet restore konecta_erp.sln
+      # الحل السحري: Restore كل مشروع لوحده بالمسار الصحيح من الـ root
+      - name: Restore ${{ matrix.service }}
+        run: |
+          dotnet restore "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj"
+
       - name: Build ${{ matrix.service }}
         run: |
           dotnet build "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj" \
@@ -94,7 +97,7 @@ jobs:
           dotnet test "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj" \
             --no-build \
             --configuration Release \
-            || echo "Tests skipped or failed for ${{ matrix.service }}"
+            || echo "No tests found or some failed for ${{ matrix.service }}"
   # Test Java Services
   test-java-services:
     name: Test Java Services
