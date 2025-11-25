@@ -53,8 +53,8 @@ jobs:
           echo "Semgrep security scan completed. Check the Security tab for detailed results."
 
   # Test .NET Services
-  test-dotnet-services:
-    name: Test .NET Services
+    test-dotnet-services:
+    name: Test .NET Services (${{ matrix.service }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -67,11 +67,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: false
+      - uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -82,29 +78,23 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('konecta_erp/**/*.csproj', 'konecta_erp/**/*.sln') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Restore dependencies
-        working-directory: konecta_erp
-        run: |
-          echo "Restoring full solution..."
-          dotnet restore konecta_erp.sln --verbosity minimal
-
-          echo "Restoring project: ${{ matrix.service }}..."
-          dotnet restore backend/${{ matrix.service }}/${{ matrix.service }}.csproj --verbosity minimal
-
+      - name: Restore Full Solution
+        run: dotnet restore konecta_erp/konecta_erp.sln || dotnet restore konecta_erp.sln
       - name: Build ${{ matrix.service }}
-        working-directory: konecta_erp
         run: |
-          dotnet build backend/${{ matrix.service }}/${{ matrix.service }}.csproj -c Release --no-restore
+          dotnet build "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj" \
+            --configuration Release \
+            --no-restore
 
-      - name: Run tests
-        working-directory: konecta_erp
+      - name: Test ${{ matrix.service }}
         run: |
-          dotnet test backend/${{ matrix.service }}/${{ matrix.service }}.csproj --no-build --verbosity normal || echo "No tests found for ${{ matrix.service }}"
-
+          dotnet test "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj" \
+            --no-build \
+            --configuration Release \
+            || echo "Tests skipped or failed for ${{ matrix.service }}"
   # Test Java Services
   test-java-services:
     name: Test Java Services
