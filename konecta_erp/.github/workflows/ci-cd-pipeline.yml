@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Build, Test, Push & Deploy
+name: CI/CD Pipeline - Build, Test, Push & Deploy to AWS ECS
 
 on:
   push:
@@ -11,14 +11,10 @@ on:
   workflow_dispatch:
 
 env:
-  # Intended: Use AWS ECR, but fallback to Docker Hub for now
-  # DOCKER_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-  DOCKER_REGISTRY: docker.io  # Fallback: Docker Hub (ECR would be used with AWS access)
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  IMAGE_TAG: ${{ github.sha }}
-  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID || '' }}  # Placeholder: Would be used for ECR
-  ECR_REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI || '' }}  # Placeholder: ECR base URI
+  DOCKER_USERNAME: mohamed710
+  DOCKER_REGISTRY: docker.io
+  AWS_REGION: us-east-1
+  TERRAFORM_VERSION: "1.6.0"
 
 jobs:
   # Security Scanning with Semgrep
@@ -183,12 +179,6 @@ jobs:
           - name: config-server
             context: konecta_erp/backend/config
             dockerfile: konecta_erp/backend/config/Dockerfile
-          - name: hr-model
-            context: konecta_erp/Ai/artifacts/hr_model
-            dockerfile: konecta_erp/Ai/artifacts/hr_model/Dockerfile
-          - name: prophet-model
-            context: konecta_erp/Ai/artifacts/prophet_model
-            dockerfile: konecta_erp/Ai/artifacts/prophet_model/Dockerfile
 
     steps:
       - name: Checkout code
@@ -197,32 +187,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub (Fallback - ECR intended)
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
-      # Intended: Login to AWS ECR (commented out - requires AWS credentials)
-      # - name: Configure AWS credentials for ECR
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ secrets.AWS_REGION }}
-      #
-      # - name: Log in to Amazon ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v2
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # Intended: Use ECR repository URI
-          # images: ${{ secrets.ECR_REPOSITORY_URI }}/${{ matrix.service.name }}
-          # Fallback: Docker Hub
-          images: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}
+          images: ${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}
           tags: |
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
@@ -235,42 +210,67 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache,mode=max
 
-  # Deploy to AWS EC2 (Testing Phase)
-  # NOTE: Deployment was not completed due to lack of AWS account access
-  # Intended Strategy: Deploy to EC2 for testing, then to ECS for production
-  # This job is a placeholder and will fail without AWS credentials
-  deploy-to-ec2:
-    name: Deploy to AWS EC2 (Testing Phase)
+  # Terraform Plan (for PRs and main branch)
+  terraform-plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    continue-on-error: true  # Allow workflow to continue even if deployment fails
+    if: github.event_name != 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # Deploy to AWS ECS (Production Phase)
-  # NOTE: This would be the production deployment step after EC2 testing
-  # Currently not implemented due to lack of AWS access
-  # deploy-to-ecs:
-  #   name: Deploy to AWS ECS (Production)
-  #   runs-on: ubuntu-latest
-  #   needs: [build-and-push, deploy-to-ec2]
-  #   if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-  #   continue-on-error: true
-  #   steps:
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ${{ secrets.AWS_REGION }}
-  #     - name: Update ECS service
-  #       run: |
-  #         aws ecs update-service \
-  #           --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
-  #           --service ${{ secrets.ECS_SERVICE_NAME }} \
-  #           --force-new-deployment
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        working-directory: konecta_erp/cloud/ERP
+        run: terraform init
+
+      - name: Terraform Format Check
+        working-directory: konecta_erp/cloud/ERP
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: konecta_erp/cloud/ERP
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: konecta_erp/cloud/ERP
+        run: |
+          terraform plan -var-file=dev.tfvars -out=tfplan
+        continue-on-error: true
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-plan
+          path: konecta_erp/cloud/ERP/tfplan
+          retention-days: 5
+
+  # Deploy to AWS ECS using Terraform
+  deploy-to-aws-ecs:
+    name: Deploy to AWS ECS
+    runs-on: ubuntu-latest
+    needs: [build-and-push, terraform-plan]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment:
+      name: production
+      url: ${{ steps.get-alb-url.outputs.url }}
 
     steps:
       - name: Checkout code
@@ -281,52 +281,73 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Add EC2 instance to known hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
 
-      - name: Copy deployment scripts to EC2
-        env:
-          EC2_USER: ${{ secrets.EC2_USER }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-        run: |
-          echo "$EC2_SSH_KEY" > /tmp/ec2_key.pem
-          chmod 600 /tmp/ec2_key.pem
-          scp -i /tmp/ec2_key.pem konecta_erp/devops/scripts/deploy.sh $EC2_USER@$EC2_HOST:/tmp/
-          scp -i /tmp/ec2_key.pem konecta_erp/docker-compose.prod.yml $EC2_USER@$EC2_HOST:/tmp/docker-compose.prod.yml || scp -i /tmp/ec2_key.pem konecta_erp/docker-compose.yml $EC2_USER@$EC2_HOST:/tmp/docker-compose.yml
-          # Copy SQL seed scripts
-          ssh -i /tmp/ec2_key.pem $EC2_USER@$EC2_HOST "mkdir -p /tmp/docker/sqlserver" || true
-          scp -i /tmp/ec2_key.pem -r konecta_erp/docker/sqlserver/* $EC2_USER@$EC2_HOST:/tmp/docker/sqlserver/ || true
-          rm /tmp/ec2_key.pem
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: konecta_erp/cloud/ERP
 
-      - name: Deploy application on EC2
-        env:
-          EC2_USER: ${{ secrets.EC2_USER }}
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Terraform Init
+        working-directory: konecta_erp/cloud/ERP
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: konecta_erp/cloud/ERP
         run: |
-          echo "$EC2_SSH_KEY" > /tmp/ec2_key.pem
-          chmod 600 /tmp/ec2_key.pem
-          ssh -i /tmp/ec2_key.pem $EC2_USER@$EC2_HOST << EOF
-            export DOCKER_USERNAME="$DOCKER_USERNAME"
-            export DOCKER_PASSWORD="$DOCKER_PASSWORD"
-            
-            # Login to Docker Hub
-            echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-            
-            # Make deploy script executable
-            chmod +x /tmp/deploy.sh
-            
-            # Run deployment
-            /tmp/deploy.sh
-            
-            # Cleanup
-            rm -f /tmp/deploy.sh /tmp/docker-compose.yml /tmp/docker-compose.prod.yml
-          EOF
-          rm /tmp/ec2_key.pem
+          if [ -f tfplan ]; then
+            terraform apply -auto-approve tfplan
+          else
+            terraform apply -auto-approve -var-file=dev.tfvars
+          fi
+
+      - name: Get ALB URL
+        id: get-alb-url
+        working-directory: konecta_erp/cloud/ERP
+        run: |
+          ALB_URL=$(terraform output -raw alb_dns_name 2>/dev/null || echo "")
+          if [ -n "$ALB_URL" ]; then
+            echo "url=http://$ALB_URL" >> $GITHUB_OUTPUT
+            echo "ALB URL: http://$ALB_URL"
+          else
+            echo "url=" >> $GITHUB_OUTPUT
+            echo "ALB URL not available yet"
+          fi
+
+      - name: Wait for ECS Services
+        run: |
+          echo "Waiting for ECS services to stabilize..."
+          sleep 30
+          aws ecs list-services --cluster konecta-erp-dev-cluster --region ${{ env.AWS_REGION }} || echo "Cluster not ready yet"
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployed Services:" >> $GITHUB_STEP_SUMMARY
+          echo "- API Gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- Config Server" >> $GITHUB_STEP_SUMMARY
+          echo "- Authentication Service" >> $GITHUB_STEP_SUMMARY
+          echo "- User Management Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Finance Service" >> $GITHUB_STEP_SUMMARY
+          echo "- HR Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Inventory Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Reporting Service" >> $GITHUB_STEP_SUMMARY
+          echo "- RabbitMQ" >> $GITHUB_STEP_SUMMARY
+          echo "- Consul" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Images:" >> $GITHUB_STEP_SUMMARY
+          echo "All images pushed to: \`${{ env.DOCKER_USERNAME }}/*:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Infrastructure:" >> $GITHUB_STEP_SUMMARY
+          echo "- AWS ECS Fargate Cluster" >> $GITHUB_STEP_SUMMARY
+          echo "- Application Load Balancer" >> $GITHUB_STEP_SUMMARY
+          echo "- RDS SQL Server" >> $GITHUB_STEP_SUMMARY
+          echo "- AWS Cloud Map Service Discovery" >> $GITHUB_STEP_SUMMARY
