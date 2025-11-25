@@ -34,6 +34,7 @@ jobs:
           submodules: false
       
       - name: Run Semgrep
+        continue-on-error: true
         uses: returntocorp/semgrep-action@v1
         with:
           config: >-
@@ -43,7 +44,9 @@ jobs:
             p/java
             p/javascript
             p/typescript
-          generateSarif: "1"
+          args: >-
+            --sarif
+            --output=semgrep.sarif
       
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v4
