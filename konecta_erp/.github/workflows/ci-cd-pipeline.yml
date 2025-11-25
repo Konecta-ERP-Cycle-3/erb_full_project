@@ -80,7 +80,7 @@ jobs:
       - name: Build ${{ matrix.service }}
         working-directory: konecta_erp
         run: |
-          dotnet build backend/${{ matrix.service }}/${{ matrix.service }}.csproj --no-restore -c Release
+          dotnet build backend/${{ matrix.service }}/${{ matrix.service }}.csproj -c Release
 
       - name: Run tests
         working-directory: konecta_erp
