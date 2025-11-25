@@ -81,8 +81,14 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      # الحل السحري: Restore كل مشروع لوحده بالمسار الصحيح من الـ root
-      - name: Restore ${{ matrix.service }}
+      
+      - name: Restore all .NET projects
+        run: |
+          find konecta_erp/backend -name "*.csproj" -type f | while read proj; do
+            dotnet restore "$proj" || echo "Warning: Failed to restore $proj"
+          done
+      
+      - name: Restore ${{ matrix.service }} (ensure assets file exists)
         run: |
           dotnet restore "konecta_erp/backend/${{ matrix.service }}/${{ matrix.service }}.csproj"
 
