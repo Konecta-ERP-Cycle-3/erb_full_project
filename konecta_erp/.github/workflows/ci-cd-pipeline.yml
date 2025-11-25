@@ -72,17 +72,11 @@ jobs:
         with:
           dotnet-version: "9.0.x"
 
-      - name: Restore dependencies
+      - name: Restore and Build ${{ matrix.service }}
         working-directory: konecta_erp
         run: |
-          dotnet restore konecta_erp.sln
-          # Ensure assets files are generated for each project
           dotnet restore backend/${{ matrix.service }}/${{ matrix.service }}.csproj
-
-      - name: Build ${{ matrix.service }}
-        working-directory: konecta_erp
-        run: |
-          dotnet build backend/${{ matrix.service }}/${{ matrix.service }}.csproj --no-restore -c Release
+          dotnet build backend/${{ matrix.service }}/${{ matrix.service }}.csproj -c Release
 
       - name: Run tests
         working-directory: konecta_erp
