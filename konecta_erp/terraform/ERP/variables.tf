@@ -100,4 +100,3 @@ variable "reporting_service_image" {
   default     = "mohamed710/reporting-service:latest"
 }
 
-

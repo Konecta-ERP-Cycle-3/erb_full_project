@@ -25,9 +25,11 @@ variable "reporting_service_image" { type = string }
 
 variable "db_username" { type = string }
 variable "db_password" {
-  type     = string
+  type      = string
   sensitive = true
 }
 
 
-variable "rds_endpoint" { type = string }
+variable "rds_endpoint" {
+  type = string
+}

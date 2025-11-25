@@ -31,8 +31,8 @@ resource "aws_ecs_task_definition" "api_gateway" {
 
   container_definitions = jsonencode([
     {
-      name  = "api-gateway"
-      image = var.api_gateway_image
+      name      = "api-gateway"
+      image     = var.api_gateway_image
       essential = true
       portMappings = [
         {
@@ -80,8 +80,8 @@ resource "aws_ecs_task_definition" "config_server" {
 
   container_definitions = jsonencode([
     {
-      name  = "config-server"
-      image = var.config_server_image
+      name      = "config-server"
+      image     = var.config_server_image
       essential = true
       portMappings = [
         {
@@ -120,8 +120,8 @@ resource "aws_ecs_task_definition" "authentication_service" {
 
   container_definitions = jsonencode([
     {
-      name  = "authentication-service"
-      image = var.authentication_service_image
+      name      = "authentication-service"
+      image     = var.authentication_service_image
       essential = true
       portMappings = [
         {
@@ -169,8 +169,8 @@ resource "aws_ecs_task_definition" "user_management_service" {
 
   container_definitions = jsonencode([
     {
-      name  = "user-management-service"
-      image = var.user_management_service_image
+      name      = "user-management-service"
+      image     = var.user_management_service_image
       essential = true
       portMappings = [
         {
@@ -218,8 +218,8 @@ resource "aws_ecs_task_definition" "finance_service" {
 
   container_definitions = jsonencode([
     {
-      name  = "finance-service"
-      image = var.finance_service_image
+      name      = "finance-service"
+      image     = var.finance_service_image
       essential = true
       portMappings = [
         {
@@ -267,8 +267,8 @@ resource "aws_ecs_task_definition" "hr_service" {
 
   container_definitions = jsonencode([
     {
-      name  = "hr-service"
-      image = var.hr_service_image
+      name      = "hr-service"
+      image     = var.hr_service_image
       essential = true
       portMappings = [
         {
@@ -316,8 +316,8 @@ resource "aws_ecs_task_definition" "inventory_service" {
 
   container_definitions = jsonencode([
     {
-      name  = "inventory-service"
-      image = var.inventory_service_image
+      name      = "inventory-service"
+      image     = var.inventory_service_image
       essential = true
       portMappings = [
         {
@@ -359,8 +359,8 @@ resource "aws_ecs_task_definition" "reporting_service" {
 
   container_definitions = jsonencode([
     {
-      name  = "reporting-service"
-      image = var.reporting_service_image
+      name      = "reporting-service"
+      image     = var.reporting_service_image
       essential = true
       portMappings = [
         {

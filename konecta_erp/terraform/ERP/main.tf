@@ -68,5 +68,3 @@ module "ecs" {
 
   rds_endpoint = module.rds.rds_endpoint
 }
-
-

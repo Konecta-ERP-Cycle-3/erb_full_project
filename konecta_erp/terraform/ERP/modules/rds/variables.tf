@@ -11,8 +11,8 @@ variable "rds_sg_id" {
 
 variable "db_username" { type = string }
 variable "db_password" {
-     type = string
-     sensitive = true
-      }
+  type      = string
+  sensitive = true
+}
 # Note: db_name not used for SQL Server - databases are created via EF migrations
 # variable "db_name"     { type = string }
