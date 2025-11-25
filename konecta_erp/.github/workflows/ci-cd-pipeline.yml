@@ -61,7 +61,6 @@ jobs:
         service:
           - AuthenticationService
           - UserManagementService
-          - UserManagementService
       fail-fast: false
 
     steps:
