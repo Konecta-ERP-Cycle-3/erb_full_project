@@ -60,9 +60,6 @@ jobs:
       matrix:
         service:
           - AuthenticationService
-          - FinanceService
-          - HrService
-          - InventoryService
           - UserManagementService
       fail-fast: false
 
@@ -195,15 +192,6 @@ jobs:
           - name: authentication-service
             context: konecta_erp
             dockerfile: konecta_erp/backend/AuthenticationService/Dockerfile
-          - name: finance-service
-            context: konecta_erp
-            dockerfile: konecta_erp/backend/FinanceService/Dockerfile
-          - name: hr-service
-            context: konecta_erp
-            dockerfile: konecta_erp/backend/HrService/Dockerfile
-          - name: inventory-service
-            context: konecta_erp
-            dockerfile: konecta_erp/backend/InventoryService/Dockerfile
           - name: user-management-service
             context: konecta_erp
             dockerfile: konecta_erp/backend/UserManagementService/Dockerfile
