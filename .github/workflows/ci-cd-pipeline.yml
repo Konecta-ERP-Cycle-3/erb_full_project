@@ -371,11 +371,12 @@ jobs:
         working-directory: konecta_erp/terraform/ERP
         continue-on-error: true
         run: |
+          set -e
           # Check if namespace exists in AWS but not in Terraform state
           PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
           NAMESPACE_NAME="${PROJECT_NAME}.local"
           
-          echo "Checking for existing namespace: $NAMESPACE_NAME"
+          echo "=== Checking for existing namespace: $NAMESPACE_NAME ==="
           
           # Get VPC ID from Terraform output or state
           VPC_ID=$(terraform output -raw vpc_id 2>/dev/null || \
@@ -388,7 +389,14 @@ jobs:
           
           echo "Using VPC ID: $VPC_ID"
           
+          # Check if namespace is already in Terraform state
+          if terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
+            echo "✓ Namespace already in Terraform state."
+            exit 0
+          fi
+          
           # Try to find existing namespace by name
+          echo "Searching for namespace by name..."
           NAMESPACE_ID=$(aws servicediscovery list-namespaces \
             --region ${{ env.AWS_REGION }} \
             --filters "Name=NAME,Values=$NAMESPACE_NAME" \
@@ -396,7 +404,6 @@ jobs:
             --output text 2>/dev/null | head -n1 || echo "")
           
           # Also check for any namespace associated with the conflicting hosted zone
-          # The error mentions hosted zone Z02860191F105ZTTY3POH
           CONFLICTING_HZ="Z02860191F105ZTTY3POH"
           echo "Checking for namespace associated with hosted zone: $CONFLICTING_HZ"
           
@@ -420,22 +427,30 @@ jobs:
           
           if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
             echo "Found existing namespace: $NAMESPACE_ID"
-            # Check if it's in Terraform state
-            if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
-              echo "Namespace exists in AWS but not in state. Attempting to import..."
-              terraform import module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" && {
-                echo "✓ Successfully imported namespace into Terraform state."
-              } || {
-                echo "⚠️ Import failed. This may require manual intervention."
-                echo "You may need to delete the namespace and its hosted zone manually, or"
-                echo "use a different namespace name to avoid the conflict."
-              }
+            echo "Attempting to import into Terraform state..."
+            if terraform import module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" 2>&1; then
+              echo "✓ Successfully imported namespace into Terraform state."
             else
-              echo "✓ Namespace already in Terraform state."
+              echo "⚠️ Import failed. Will try to handle hosted zone conflict..."
+              # Check if there's an orphaned hosted zone blocking creation
+              HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-vpc \
+                --vpc-id "$VPC_ID" \
+                --vpc-region ${{ env.AWS_REGION }} \
+                --query "HostedZoneSummaries[?Name=='$NAMESPACE_NAME.'].HostedZoneId" \
+                --output text 2>/dev/null | head -n1 || echo "")
+              
+              if [ -n "$HOSTED_ZONE_ID" ] && [ "$HOSTED_ZONE_ID" != "None" ]; then
+                echo "⚠️ Found conflicting hosted zone: $HOSTED_ZONE_ID"
+                echo "⚠️ Attempting to disassociate hosted zone from VPC..."
+                aws route53 disassociate-vpc-from-hosted-zone \
+                  --hosted-zone-id "$HOSTED_ZONE_ID" \
+                  --vpc VPCRegion=${{ env.AWS_REGION }},VPCId=$VPC_ID 2>&1 || \
+                echo "⚠️ Could not disassociate hosted zone. May need manual cleanup."
+              fi
             fi
           else
             echo "No existing namespace found."
-            # Check if there's an orphaned hosted zone
+            # Check if there's an orphaned hosted zone blocking creation
             HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-vpc \
               --vpc-id "$VPC_ID" \
               --vpc-region ${{ env.AWS_REGION }} \
@@ -444,23 +459,32 @@ jobs:
             
             if [ -n "$HOSTED_ZONE_ID" ] && [ "$HOSTED_ZONE_ID" != "None" ]; then
               echo "⚠️ Found orphaned hosted zone: $HOSTED_ZONE_ID for $NAMESPACE_NAME"
-              echo "⚠️ This hosted zone is blocking namespace creation."
-              echo "⚠️ You may need to manually disassociate it from the VPC or delete it."
-              echo "⚠️ Command to check: aws route53 disassociate-vpc-from-hosted-zone --hosted-zone-id $HOSTED_ZONE_ID --vpc VPCRegion=${{ env.AWS_REGION }},VPCId=$VPC_ID"
-            else
-              echo "No conflicting hosted zone found - Terraform will create the namespace."
+              echo "⚠️ Attempting to disassociate hosted zone from VPC to allow namespace creation..."
+              aws route53 disassociate-vpc-from-hosted-zone \
+                --hosted-zone-id "$HOSTED_ZONE_ID" \
+                --vpc VPCRegion=${{ env.AWS_REGION }},VPCId=$VPC_ID 2>&1 && \
+              echo "✓ Successfully disassociated hosted zone." || \
+              echo "⚠️ Could not disassociate hosted zone. May need manual cleanup."
             fi
           fi
+          set +e
 
       - name: Handle Orphaned Load Balancer
         working-directory: konecta_erp/terraform/ERP
         continue-on-error: true
         run: |
+          set -e
           # Check if load balancer exists
           PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
           LB_NAME="${PROJECT_NAME}-alb"
           
-          echo "Checking for existing load balancer: $LB_NAME"
+          echo "=== Checking for existing load balancer: $LB_NAME ==="
+          
+          # Check if it's already in Terraform state
+          if terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
+            echo "✓ Load balancer already in Terraform state."
+            exit 0
+          fi
           
           LB_ARN=$(aws elbv2 describe-load-balancers \
             --region ${{ env.AWS_REGION }} \
@@ -470,29 +494,34 @@ jobs:
           
           if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
             echo "Found existing load balancer: $LB_ARN"
-            # Check if it's in Terraform state
-            if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
-              echo "Load balancer exists in AWS but not in state. Attempting to import..."
-              terraform import module.ecs.aws_lb.main "$LB_ARN" || {
-                echo "⚠️ Import failed. Load balancer may need to be managed manually."
-                echo "Note: Load balancers cannot be deleted if they have active listeners or target groups."
-              }
+            echo "Attempting to import into Terraform state..."
+            if terraform import module.ecs.aws_lb.main "$LB_ARN" 2>&1; then
+              echo "✓ Successfully imported load balancer into Terraform state."
             else
-              echo "✓ Load balancer already in Terraform state."
+              echo "⚠️ Import failed. Load balancer may need to be managed manually."
+              echo "Note: Load balancers cannot be deleted if they have active listeners or target groups."
             fi
           else
             echo "No existing load balancer found - Terraform will create it."
           fi
+          set +e
 
       - name: Handle Orphaned Target Group
         working-directory: konecta_erp/terraform/ERP
         continue-on-error: true
         run: |
+          set -e
           # Check if target group exists
           PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
           TG_NAME="${PROJECT_NAME}-api-gateway-tg"
           
-          echo "Checking for existing target group: $TG_NAME"
+          echo "=== Checking for existing target group: $TG_NAME ==="
+          
+          # Check if it's already in Terraform state
+          if terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb_target_group\.api_gateway_tg"; then
+            echo "✓ Target group already in Terraform state."
+            exit 0
+          fi
           
           TG_ARN=$(aws elbv2 describe-target-groups \
             --region ${{ env.AWS_REGION }} \
@@ -502,45 +531,64 @@ jobs:
           
           if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
             echo "Found existing target group: $TG_ARN"
-            # Check if it's in Terraform state
-            if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb_target_group\.api_gateway_tg"; then
-              echo "Target group exists in AWS but not in state. Attempting to import..."
-              terraform import module.ecs.aws_lb_target_group.api_gateway_tg "$TG_ARN" || {
-                echo "⚠️ Import failed. Checking if target group is attached to a load balancer..."
-                # Check if attached to any load balancer
-                ATTACHED_LBS=$(aws elbv2 describe-target-groups \
-                  --region ${{ env.AWS_REGION }} \
-                  --target-group-arns "$TG_ARN" \
-                  --query 'TargetGroups[0].LoadBalancerArns' \
-                  --output text 2>/dev/null || echo "None")
-                
-                if [ -z "$ATTACHED_LBS" ] || [ "$ATTACHED_LBS" = "None" ]; then
-                  echo "Target group not attached to any load balancer. Attempting to delete..."
-                  aws elbv2 delete-target-group \
-                    --region ${{ env.AWS_REGION }} \
-                    --target-group-arn "$TG_ARN" && \
-                  echo "✓ Orphaned target group deleted successfully." || \
-                  echo "⚠️ Delete failed - Terraform will handle it during apply."
-                else
-                  echo "⚠️ Target group is attached to load balancer(s): $ATTACHED_LBS"
-                  echo "Will attempt to import during Terraform apply."
-                fi
-              }
+            echo "Attempting to import into Terraform state..."
+            if terraform import module.ecs.aws_lb_target_group.api_gateway_tg "$TG_ARN" 2>&1; then
+              echo "✓ Successfully imported target group into Terraform state."
             else
-              echo "✓ Target group already in Terraform state."
+              echo "⚠️ Import failed. Checking if target group is attached to a load balancer..."
+              # Check if attached to any load balancer
+              ATTACHED_LBS=$(aws elbv2 describe-target-groups \
+                --region ${{ env.AWS_REGION }} \
+                --target-group-arns "$TG_ARN" \
+                --query 'TargetGroups[0].LoadBalancerArns' \
+                --output text 2>/dev/null || echo "None")
+              
+              if [ -z "$ATTACHED_LBS" ] || [ "$ATTACHED_LBS" = "None" ]; then
+                echo "Target group not attached to any load balancer. Attempting to delete..."
+                if aws elbv2 delete-target-group \
+                  --region ${{ env.AWS_REGION }} \
+                  --target-group-arn "$TG_ARN" 2>&1; then
+                  echo "✓ Orphaned target group deleted successfully."
+                else
+                  echo "⚠️ Delete failed - Terraform will handle it during apply."
+                fi
+              else
+                echo "⚠️ Target group is attached to load balancer(s): $ATTACHED_LBS"
+                echo "Cannot delete. Will attempt to import during Terraform apply."
+              fi
             fi
           else
             echo "No existing target group found - Terraform will create it."
           fi
+          set +e
 
-      - name: Summary of Resource Cleanup
+      - name: Verify Imported Resources
         working-directory: konecta_erp/terraform/ERP
         continue-on-error: true
         run: |
-          echo "=== Resource Cleanup Summary ==="
-          echo "Checking Terraform state for imported resources..."
-          terraform state list 2>/dev/null | grep -E "(namespace|lb|target_group|security_group)" || echo "No matching resources in state"
-          echo "================================="
+          echo "=== Verifying Imported Resources ==="
+          echo "Resources in Terraform state:"
+          terraform state list 2>/dev/null | grep -E "(namespace|lb|target_group|security_group)" || echo "No matching resources found"
+          
+          # Verify specific resources
+          if terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
+            echo "✓ Namespace is in state"
+          else
+            echo "⚠️ Namespace NOT in state - may cause conflicts"
+          fi
+          
+          if terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
+            echo "✓ Load balancer is in state"
+          else
+            echo "⚠️ Load balancer NOT in state - may cause conflicts"
+          fi
+          
+          if terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb_target_group\.api_gateway_tg"; then
+            echo "✓ Target group is in state"
+          else
+            echo "⚠️ Target group NOT in state - may cause conflicts"
+          fi
+          echo "===================================="
 
       - name: Terraform Refresh State
         working-directory: konecta_erp/terraform/ERP
