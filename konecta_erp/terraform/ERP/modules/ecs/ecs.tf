@@ -397,14 +397,21 @@ resource "aws_ecs_task_definition" "reporting_service" {
 # ===========================
 # SERVICE DISCOVERY
 # ===========================
+# Note: This resource should be imported if it already exists in AWS.
+# The import-resources.sh script handles this automatically.
 resource "aws_service_discovery_private_dns_namespace" "main" {
   name        = "${var.project_name}.local"
   description = "Service discovery namespace for ${var.project_name}"
   vpc         = var.vpc_id
 
   lifecycle {
-    prevent_destroy       = true
-    create_before_destroy = true
+    prevent_destroy = true
+    # Ignore changes to prevent unwanted updates after import
+    ignore_changes = [
+      name,
+      description,
+      vpc,
+    ]
   }
 }
 
@@ -837,8 +844,12 @@ resource "aws_lb" "main" {
   subnets            = var.public_subnet_ids
 
   lifecycle {
-    prevent_destroy       = true
-    create_before_destroy = true
+    prevent_destroy = true
+    ignore_changes = [
+      # Ignore changes to prevent recreation if resource is imported
+      name,
+      subnets,
+    ]
   }
 }
 
@@ -860,8 +871,14 @@ resource "aws_lb_target_group" "api_gateway_tg" {
   }
 
   lifecycle {
-    prevent_destroy       = true
-    create_before_destroy = true
+    prevent_destroy = true
+    ignore_changes = [
+      # Ignore changes to prevent recreation if resource is imported
+      name,
+      port,
+      protocol,
+      vpc_id,
+    ]
   }
 }
 

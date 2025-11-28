@@ -605,10 +605,127 @@ jobs:
           echo "Refreshing Terraform state to sync with AWS..."
           terraform refresh -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" || echo "Refresh completed with warnings"
 
+      - name: Force Import Missing Resources
+        working-directory: konecta_erp/terraform/ERP
+        continue-on-error: true
+        run: |
+          echo "=== Force Importing Missing Resources ==="
+          PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
+          
+          # Check and import namespace if missing
+          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
+            echo "Namespace not in state, attempting to find and import..."
+            NAMESPACE_ID=$(aws servicediscovery list-namespaces \
+              --region ${{ env.AWS_REGION }} \
+              --filters "Name=NAME,Values=${PROJECT_NAME}.local" \
+              --query 'Namespaces[?Type=="DNS_PRIVATE"].Id' \
+              --output text 2>/dev/null | head -n1 || echo "")
+            
+            if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
+              echo "Importing namespace: $NAMESPACE_ID"
+              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
+                module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" || echo "Import failed"
+            fi
+          fi
+          
+          # Check and import ALB if missing
+          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
+            echo "Load balancer not in state, attempting to find and import..."
+            LB_ARN=$(aws elbv2 describe-load-balancers \
+              --region ${{ env.AWS_REGION }} \
+              --names "${PROJECT_NAME}-alb" \
+              --query 'LoadBalancers[0].LoadBalancerArn' \
+              --output text 2>/dev/null || echo "")
+            
+            if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
+              echo "Importing load balancer: $LB_ARN"
+              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
+                module.ecs.aws_lb.main "$LB_ARN" || echo "Import failed"
+            fi
+          fi
+          
+          # Check and import target group if missing
+          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb_target_group\.api_gateway_tg"; then
+            echo "Target group not in state, attempting to find and import..."
+            TG_ARN=$(aws elbv2 describe-target-groups \
+              --region ${{ env.AWS_REGION }} \
+              --names "${PROJECT_NAME}-api-gateway-tg" \
+              --query 'TargetGroups[0].TargetGroupArn' \
+              --output text 2>/dev/null || echo "")
+            
+            if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
+              echo "Importing target group: $TG_ARN"
+              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
+                module.ecs.aws_lb_target_group.api_gateway_tg "$TG_ARN" || echo "Import failed"
+            fi
+          fi
+
+      - name: Verify Resources Are Imported
+        working-directory: konecta_erp/terraform/ERP
+        continue-on-error: true
+        run: |
+          echo "=== Verifying Resources Are in State ==="
+          MISSING_RESOURCES=0
+          
+          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
+            echo "⚠️ WARNING: Namespace not in state - will attempt import during apply"
+            MISSING_RESOURCES=1
+          else
+            echo "✓ Namespace is in state"
+          fi
+          
+          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
+            echo "⚠️ WARNING: Load balancer not in state - will attempt import during apply"
+            MISSING_RESOURCES=1
+          else
+            echo "✓ Load balancer is in state"
+          fi
+          
+          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb_target_group\.api_gateway_tg"; then
+            echo "⚠️ WARNING: Target group not in state - will attempt import during apply"
+            MISSING_RESOURCES=1
+          else
+            echo "✓ Target group is in state"
+          fi
+          
+          if [ $MISSING_RESOURCES -eq 1 ]; then
+            echo ""
+            echo "⚠️ Some resources are missing from state."
+            echo "The import script should have imported them. Checking AWS..."
+            
+            # Try one more time to import missing resources
+            export PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
+            export AWS_REGION=${{ env.AWS_REGION }}
+            export DB_PASSWORD="${{ secrets.AWS_DB_PASSWORD }}"
+            ./import-resources.sh || true
+          fi
+
       - name: Terraform Plan
         working-directory: konecta_erp/terraform/ERP
         run: |
           terraform plan -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" -out=tfplan
+          
+          # Check if plan shows namespace creation (which would fail)
+          if terraform show tfplan 2>/dev/null | grep -q "aws_service_discovery_private_dns_namespace.main.*will be created"; then
+            echo "⚠️ WARNING: Plan shows namespace will be created, but it may already exist"
+            echo "This will fail with ConflictingDomainExists error"
+            echo "Attempting emergency import..."
+            
+            PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
+            NAMESPACE_ID=$(aws servicediscovery list-namespaces \
+              --region ${{ env.AWS_REGION }} \
+              --filters "Name=NAME,Values=${PROJECT_NAME}.local" \
+              --query 'Namespaces[?Type=="DNS_PRIVATE"].Id' \
+              --output text 2>/dev/null | head -n1 || echo "")
+            
+            if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
+              echo "Found namespace $NAMESPACE_ID, importing..."
+              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
+                module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" || true
+              echo "Re-running plan after import..."
+              terraform plan -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" -out=tfplan
+            fi
+          fi
 
       - name: Terraform Apply
         working-directory: konecta_erp/terraform/ERP
