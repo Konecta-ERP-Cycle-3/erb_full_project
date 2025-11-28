@@ -29,6 +29,17 @@ output "alb_dns_name" {
   value       = module.ecs.alb_dns_name
 }
 
+output "backend_service_name" {
+  description = "Backend ECS Service Name"
+  value       = module.ecs.backend_service_name
+}
+
+output "frontend_service_name" {
+  description = "Frontend ECS Service Name"
+  value       = module.ecs.frontend_service_name
+}
+
 output "rds_endpoint" {
-  value = module.rds.rds_endpoint
+  description = "RDS Endpoint"
+  value       = module.rds.rds_endpoint
 }

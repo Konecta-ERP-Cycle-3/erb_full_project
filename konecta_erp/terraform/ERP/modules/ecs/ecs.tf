@@ -8,6 +8,10 @@ resource "aws_ecs_cluster" "main" {
     name  = "containerInsights"
     value = "enabled"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # ===========================
@@ -399,6 +403,7 @@ resource "aws_service_discovery_private_dns_namespace" "main" {
   vpc         = var.vpc_id
 
   lifecycle {
+    prevent_destroy       = true
     create_before_destroy = true
   }
 }
@@ -832,6 +837,7 @@ resource "aws_lb" "main" {
   subnets            = var.public_subnet_ids
 
   lifecycle {
+    prevent_destroy       = true
     create_before_destroy = true
   }
 }
@@ -854,6 +860,7 @@ resource "aws_lb_target_group" "api_gateway_tg" {
   }
 
   lifecycle {
+    prevent_destroy       = true
     create_before_destroy = true
   }
 }
@@ -866,5 +873,9 @@ resource "aws_lb_listener" "http" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.api_gateway_tg.arn
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }

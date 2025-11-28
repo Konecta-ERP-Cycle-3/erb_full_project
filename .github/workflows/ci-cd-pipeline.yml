@@ -357,15 +357,25 @@ jobs:
         working-directory: konecta_erp/terraform/ERP
         continue-on-error: true
         run: |
-          # Remove frontend_ecs security group from state if it exists (orphaned resource)
-          # This allows Terraform to skip trying to destroy it
           if terraform state list 2>/dev/null | grep -q "module\.security_groups\.aws_security_group\.frontend_ecs"; then
             echo "Removing orphaned frontend_ecs security group from Terraform state..."
             terraform state rm module.security_groups.aws_security_group.frontend_ecs
-            echo "Security group removed from state. AWS will clean it up when network interfaces detach."
-          else
-            echo "No orphaned security group found in state."
           fi
+
+      - name: Import Existing AWS Resources
+        working-directory: konecta_erp/terraform/ERP
+        continue-on-error: true
+        run: |
+          echo "=== Importing existing AWS resources into Terraform state ==="
+          chmod +x import-resources.sh || true
+          export PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
+          export AWS_REGION=${{ env.AWS_REGION }}
+          export DB_PASSWORD="${{ secrets.AWS_DB_PASSWORD }}"
+          ./import-resources.sh
+          
+          echo ""
+          echo "=== Import Summary ==="
+          terraform state list 2>/dev/null | grep -E "(namespace|lb|target_group)" || echo "No matching resources in state"
 
       - name: Handle Orphaned Service Discovery Namespace
         working-directory: konecta_erp/terraform/ERP
