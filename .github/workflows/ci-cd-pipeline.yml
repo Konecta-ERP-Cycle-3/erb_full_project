@@ -356,11 +356,7 @@ jobs:
       - name: Terraform Apply
         working-directory: konecta_erp/terraform/ERP
         run: |
-          if [ -f tfplan ]; then
-            terraform apply -auto-approve tfplan
-          else
-            terraform apply -auto-approve -var-file=dev.tfvars
-          fi
+          terraform apply -auto-approve -var-file=dev.tfvars
 
       - name: Get ALB URL
         id: get-alb-url
