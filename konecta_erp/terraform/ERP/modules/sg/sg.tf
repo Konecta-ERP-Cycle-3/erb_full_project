@@ -70,49 +70,56 @@ resource "aws_security_group" "backend_ecs" {
     from_port       = 5003 # Finance Service
     to_port         = 5003
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG is allowed by default
   }
 
   ingress {
     from_port       = 5005 # HR Service
     to_port         = 5005
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG is allowed by default
   }
 
   ingress {
     from_port       = 5020 # Inventory Service
     to_port         = 5020
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG is allowed by default
   }
 
   ingress {
     from_port       = 8085 # Reporting Service
     to_port         = 8085
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG is allowed by default
   }
 
   ingress {
     from_port       = 8888 # Config Server
     to_port         = 8888
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG is allowed by default
   }
 
   ingress {
     from_port       = 5672 # RabbitMQ AMQP
     to_port         = 5672
     protocol        = "tcp"
-    security_groups = [aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG (backend_ecs) is allowed by default
   }
 
   ingress {
     from_port       = 8500 # Consul
     to_port         = 8500
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
+    security_groups = [aws_security_group.api_gateway.id]
+    # Note: Inter-service communication within same SG is allowed by default
   }
 
   egress {
