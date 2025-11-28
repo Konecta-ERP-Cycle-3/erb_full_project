@@ -46,18 +46,18 @@ resource "aws_ecs_task_definition" "api_gateway" {
       ]
       environment = [
         { name = "SPRING_APPLICATION_NAME", value = "api-gateway" },
-        { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING_CLOUD_CONFIG_FAILFAST", value = "true" },
-        { name = "CONSUL_HOST", value = "consul.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "CONSUL_HOST", value = "consul.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "CONSUL_PORT", value = "8500" },
         { name = "CONSUL_SERVICE_HOST", value = "api-gateway" },
-        { name = "AUTH_SERVICE_URI", value = "http://authentication-service.${aws_service_discovery_private_dns_namespace.main.name}:7280" },
-        { name = "AUTH_JWKS_URI", value = "http://authentication-service.${aws_service_discovery_private_dns_namespace.main.name}:7280/.well-known/jwks.json" },
-        { name = "HR_SERVICE_URI", value = "http://hr-service.${aws_service_discovery_private_dns_namespace.main.name}:5005" },
-        { name = "USER_MANAGEMENT_SERVICE_URI", value = "http://user-management-service.${aws_service_discovery_private_dns_namespace.main.name}:5078" },
-        { name = "INVENTORY_SERVICE_URI", value = "http://inventory-service.${aws_service_discovery_private_dns_namespace.main.name}:5020" },
-        { name = "FINANCE_SERVICE_URI", value = "http://finance-service.${aws_service_discovery_private_dns_namespace.main.name}:5003" },
-        { name = "REPORTING_SERVICE_URI", value = "http://reporting-service.${aws_service_discovery_private_dns_namespace.main.name}:8085" }
+        { name = "AUTH_SERVICE_URI", value = "http://authentication-service.${data.aws_service_discovery_dns_namespace.existing.name}:7280" },
+        { name = "AUTH_JWKS_URI", value = "http://authentication-service.${data.aws_service_discovery_dns_namespace.existing.name}:7280/.well-known/jwks.json" },
+        { name = "HR_SERVICE_URI", value = "http://hr-service.${data.aws_service_discovery_dns_namespace.existing.name}:5005" },
+        { name = "USER_MANAGEMENT_SERVICE_URI", value = "http://user-management-service.${data.aws_service_discovery_dns_namespace.existing.name}:5078" },
+        { name = "INVENTORY_SERVICE_URI", value = "http://inventory-service.${data.aws_service_discovery_dns_namespace.existing.name}:5020" },
+        { name = "FINANCE_SERVICE_URI", value = "http://finance-service.${data.aws_service_discovery_dns_namespace.existing.name}:5003" },
+        { name = "REPORTING_SERVICE_URI", value = "http://reporting-service.${data.aws_service_discovery_dns_namespace.existing.name}:8085" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -95,9 +95,9 @@ resource "aws_ecs_task_definition" "config_server" {
       ]
       environment = [
         { name = "SERVER_PORT", value = "8888" },
-        { name = "CONSUL_HOST", value = "consul.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "CONSUL_HOST", value = "consul.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "CONSUL_PORT", value = "8500" },
-        { name = "CONSUL_ENDPOINT", value = "http://consul.${aws_service_discovery_private_dns_namespace.main.name}:8500" }
+        { name = "CONSUL_ENDPOINT", value = "http://consul.${data.aws_service_discovery_dns_namespace.existing.name}:8500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -137,16 +137,16 @@ resource "aws_ecs_task_definition" "authentication_service" {
         { name = "ASPNETCORE_ENVIRONMENT", value = "Production" },
         { name = "ASPNETCORE_URLS", value = "http://+:7280" },
         { name = "SPRING__APPLICATION__NAME", value = "authentication-service" },
-        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING__CLOUD__CONFIG__FAILFAST", value = "true" },
         { name = "ConnectionStrings__DefaultConnection", value = "Server=${replace(var.rds_endpoint, ":1433", "")},1433;Database=Konecta_Auth;User Id=${var.db_username};Password=${var.db_password};TrustServerCertificate=True;MultipleActiveResultSets=True;" },
-        { name = "RabbitMQ__HostName", value = "rabbitmq.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "RabbitMQ__HostName", value = "rabbitmq.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "RabbitMQ__Port", value = "5672" },
         { name = "RabbitMQ__UserName", value = "guest" },
         { name = "RabbitMQ__Password", value = "guest" },
         { name = "RabbitMQ__VirtualHost", value = "/" },
         { name = "RabbitMQ__Exchange", value = "konecta.erp" },
-        { name = "Consul__Host", value = "http://consul.${aws_service_discovery_private_dns_namespace.main.name}:8500" }
+        { name = "Consul__Host", value = "http://consul.${data.aws_service_discovery_dns_namespace.existing.name}:8500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -186,16 +186,16 @@ resource "aws_ecs_task_definition" "user_management_service" {
         { name = "ASPNETCORE_ENVIRONMENT", value = "Production" },
         { name = "ASPNETCORE_URLS", value = "http://+:5078" },
         { name = "SPRING__APPLICATION__NAME", value = "user-management-service" },
-        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING__CLOUD__CONFIG__FAILFAST", value = "true" },
         { name = "ConnectionStrings__DefaultConnection", value = "Server=${replace(var.rds_endpoint, ":1433", "")},1433;Database=Konecta_UserManagement;User Id=${var.db_username};Password=${var.db_password};TrustServerCertificate=True;MultipleActiveResultSets=True;" },
-        { name = "RabbitMQ__HostName", value = "rabbitmq.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "RabbitMQ__HostName", value = "rabbitmq.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "RabbitMQ__Port", value = "5672" },
         { name = "RabbitMQ__UserName", value = "guest" },
         { name = "RabbitMQ__Password", value = "guest" },
         { name = "RabbitMQ__VirtualHost", value = "/" },
         { name = "RabbitMQ__Exchange", value = "konecta.erp" },
-        { name = "Consul__Host", value = "http://consul.${aws_service_discovery_private_dns_namespace.main.name}:8500" }
+        { name = "Consul__Host", value = "http://consul.${data.aws_service_discovery_dns_namespace.existing.name}:8500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -235,16 +235,16 @@ resource "aws_ecs_task_definition" "finance_service" {
         { name = "ASPNETCORE_ENVIRONMENT", value = "Production" },
         { name = "ASPNETCORE_URLS", value = "http://+:5003" },
         { name = "SPRING__APPLICATION__NAME", value = "finance-service" },
-        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING__CLOUD__CONFIG__FAILFAST", value = "true" },
         { name = "ConnectionStrings__DefaultConnection", value = "Server=${replace(var.rds_endpoint, ":1433", "")},1433;Database=Konecta_Finance;User Id=${var.db_username};Password=${var.db_password};TrustServerCertificate=True;MultipleActiveResultSets=True;" },
-        { name = "RabbitMQ__HostName", value = "rabbitmq.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "RabbitMQ__HostName", value = "rabbitmq.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "RabbitMQ__Port", value = "5672" },
         { name = "RabbitMQ__UserName", value = "guest" },
         { name = "RabbitMQ__Password", value = "guest" },
         { name = "RabbitMQ__VirtualHost", value = "/" },
         { name = "RabbitMQ__Exchange", value = "konecta.erp" },
-        { name = "Consul__Host", value = "http://consul.${aws_service_discovery_private_dns_namespace.main.name}:8500" }
+        { name = "Consul__Host", value = "http://consul.${data.aws_service_discovery_dns_namespace.existing.name}:8500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -284,16 +284,16 @@ resource "aws_ecs_task_definition" "hr_service" {
         { name = "ASPNETCORE_ENVIRONMENT", value = "Production" },
         { name = "ASPNETCORE_URLS", value = "http://+:5005" },
         { name = "SPRING__APPLICATION__NAME", value = "hr-service" },
-        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING__CLOUD__CONFIG__FAILFAST", value = "true" },
         { name = "ConnectionStrings__DefaultConnection", value = "Server=${replace(var.rds_endpoint, ":1433", "")},1433;Database=Konecta_Hr;User Id=${var.db_username};Password=${var.db_password};TrustServerCertificate=True;MultipleActiveResultSets=True;" },
-        { name = "RabbitMQ__HostName", value = "rabbitmq.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "RabbitMQ__HostName", value = "rabbitmq.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "RabbitMQ__Port", value = "5672" },
         { name = "RabbitMQ__UserName", value = "guest" },
         { name = "RabbitMQ__Password", value = "guest" },
         { name = "RabbitMQ__VirtualHost", value = "/" },
         { name = "RabbitMQ__Exchange", value = "konecta.erp" },
-        { name = "Consul__Host", value = "http://consul.${aws_service_discovery_private_dns_namespace.main.name}:8500" }
+        { name = "Consul__Host", value = "http://consul.${data.aws_service_discovery_dns_namespace.existing.name}:8500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -333,10 +333,10 @@ resource "aws_ecs_task_definition" "inventory_service" {
         { name = "ASPNETCORE_ENVIRONMENT", value = "Production" },
         { name = "ASPNETCORE_URLS", value = "http://+:5020" },
         { name = "SPRING__APPLICATION__NAME", value = "inventory-service" },
-        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING__CLOUD__CONFIG__URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING__CLOUD__CONFIG__FAILFAST", value = "true" },
         { name = "ConnectionStrings__DefaultConnection", value = "Server=${replace(var.rds_endpoint, ":1433", "")},1433;Database=Konecta_Inventory;User Id=${var.db_username};Password=${var.db_password};TrustServerCertificate=True;MultipleActiveResultSets=True;" },
-        { name = "Consul__Host", value = "http://consul.${aws_service_discovery_private_dns_namespace.main.name}:8500" }
+        { name = "Consul__Host", value = "http://consul.${data.aws_service_discovery_dns_namespace.existing.name}:8500" }
       ]
       logConfiguration = {
         logDriver = "awslogs"
@@ -374,12 +374,12 @@ resource "aws_ecs_task_definition" "reporting_service" {
       ]
       environment = [
         { name = "SPRING_APPLICATION_NAME", value = "reporting-service" },
-        { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
+        { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
         { name = "SPRING_CLOUD_CONFIG_FAILFAST", value = "true" },
-        { name = "FINANCE_SERVICE_URI", value = "http://finance-service.${aws_service_discovery_private_dns_namespace.main.name}:5003" },
-        { name = "HR_SERVICE_URI", value = "http://hr-service.${aws_service_discovery_private_dns_namespace.main.name}:5005" },
-        { name = "INVENTORY_SERVICE_URI", value = "http://inventory-service.${aws_service_discovery_private_dns_namespace.main.name}:5020" },
-        { name = "CONSUL_HOST", value = "consul.${aws_service_discovery_private_dns_namespace.main.name}" },
+        { name = "FINANCE_SERVICE_URI", value = "http://finance-service.${data.aws_service_discovery_dns_namespace.existing.name}:5003" },
+        { name = "HR_SERVICE_URI", value = "http://hr-service.${data.aws_service_discovery_dns_namespace.existing.name}:5005" },
+        { name = "INVENTORY_SERVICE_URI", value = "http://inventory-service.${data.aws_service_discovery_dns_namespace.existing.name}:5020" },
+        { name = "CONSUL_HOST", value = "consul.${data.aws_service_discovery_dns_namespace.existing.name}" },
         { name = "CONSUL_PORT", value = "8500" }
       ]
       logConfiguration = {
@@ -397,28 +397,16 @@ resource "aws_ecs_task_definition" "reporting_service" {
 # ===========================
 # SERVICE DISCOVERY
 # ===========================
-# Note: This resource should be imported if it already exists in AWS.
-# The import-resources.sh script handles this automatically.
-resource "aws_service_discovery_private_dns_namespace" "main" {
-  name        = "${var.project_name}.local"
-  description = "Service discovery namespace for ${var.project_name}"
-  vpc         = var.vpc_id
-
-  lifecycle {
-    prevent_destroy = true
-    # Ignore changes to prevent unwanted updates after import
-    ignore_changes = [
-      name,
-      description,
-      vpc,
-    ]
-  }
+# Use data source to reference existing namespace instead of creating new one
+data "aws_service_discovery_dns_namespace" "existing" {
+  name = "${var.project_name}.local"
+  type = "DNS_PRIVATE"
 }
 
 resource "aws_service_discovery_service" "api_gateway" {
   name = "api-gateway"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -430,7 +418,7 @@ resource "aws_service_discovery_service" "api_gateway" {
 resource "aws_service_discovery_service" "config_server" {
   name = "config-server"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -442,7 +430,7 @@ resource "aws_service_discovery_service" "config_server" {
 resource "aws_service_discovery_service" "authentication_service" {
   name = "authentication-service"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -454,7 +442,7 @@ resource "aws_service_discovery_service" "authentication_service" {
 resource "aws_service_discovery_service" "user_management_service" {
   name = "user-management-service"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -466,7 +454,7 @@ resource "aws_service_discovery_service" "user_management_service" {
 resource "aws_service_discovery_service" "finance_service" {
   name = "finance-service"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -478,7 +466,7 @@ resource "aws_service_discovery_service" "finance_service" {
 resource "aws_service_discovery_service" "hr_service" {
   name = "hr-service"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -490,7 +478,7 @@ resource "aws_service_discovery_service" "hr_service" {
 resource "aws_service_discovery_service" "inventory_service" {
   name = "inventory-service"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -502,7 +490,7 @@ resource "aws_service_discovery_service" "inventory_service" {
 resource "aws_service_discovery_service" "reporting_service" {
   name = "reporting-service"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -770,7 +758,7 @@ resource "aws_ecs_task_definition" "consul" {
 resource "aws_service_discovery_service" "rabbitmq" {
   name = "rabbitmq"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"
@@ -782,7 +770,7 @@ resource "aws_service_discovery_service" "rabbitmq" {
 resource "aws_service_discovery_service" "consul" {
   name = "consul"
   dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.main.id
+    namespace_id = data.aws_service_discovery_dns_namespace.existing.id
     dns_records {
       ttl  = 10
       type = "A"

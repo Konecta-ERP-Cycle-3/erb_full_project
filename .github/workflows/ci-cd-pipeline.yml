@@ -462,13 +462,11 @@ jobs:
             fi
           fi
           
+          # Namespace is now referenced via data source - no import needed
           if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
-            echo "Found existing namespace: $NAMESPACE_ID"
-            echo "Attempting to import into Terraform state..."
-            terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" 2>&1 && \
-            echo "✓ Successfully imported namespace into Terraform state." || {
-              echo "⚠️ Import failed. Error details above."
-            }
+            echo "✓ Found existing namespace: $NAMESPACE_ID"
+            echo "Namespace is referenced via data source (data.aws_service_discovery_dns_namespace.existing)"
+            echo "No import needed - Terraform will reference it automatically"
           elif [ -n "$HOSTED_ZONE_ID" ] && [ "$HOSTED_ZONE_ID" != "None" ]; then
             echo "⚠️ No namespace found but hosted zone $HOSTED_ZONE_ID is blocking creation"
             echo "⚠️ Attempting to disassociate hosted zone from VPC..."
@@ -612,21 +610,9 @@ jobs:
           echo "=== Force Importing Missing Resources ==="
           PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
           
-          # Check and import namespace if missing
-          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
-            echo "Namespace not in state, attempting to find and import..."
-            NAMESPACE_ID=$(aws servicediscovery list-namespaces \
-              --region ${{ env.AWS_REGION }} \
-              --filters "Name=NAME,Values=${PROJECT_NAME}.local" \
-              --query 'Namespaces[?Type=="DNS_PRIVATE"].Id' \
-              --output text 2>/dev/null | head -n1 || echo "")
-            
-            if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
-              echo "Importing namespace: $NAMESPACE_ID"
-              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
-                module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" || echo "Import failed"
-            fi
-          fi
+          # Namespace is now referenced via data source - no import needed
+          echo "Namespace is referenced via data source (data.aws_service_discovery_dns_namespace.existing)"
+          echo "No import needed - Terraform will reference the existing namespace automatically"
           
           # Check and import ALB if missing
           if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
@@ -667,12 +653,8 @@ jobs:
           echo "=== Verifying Resources Are in State ==="
           MISSING_RESOURCES=0
           
-          if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_service_discovery_private_dns_namespace\.main"; then
-            echo "⚠️ WARNING: Namespace not in state - will attempt import during apply"
-            MISSING_RESOURCES=1
-          else
-            echo "✓ Namespace is in state"
-          fi
+          # Namespace is now referenced via data source - no state check needed
+          echo "✓ Namespace is referenced via data source (no state import needed)"
           
           if ! terraform state list 2>/dev/null | grep -q "module\.ecs\.aws_lb\.main"; then
             echo "⚠️ WARNING: Load balancer not in state - will attempt import during apply"
@@ -705,27 +687,11 @@ jobs:
         run: |
           terraform plan -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" -out=tfplan
           
-          # Check if plan shows namespace creation (which would fail)
-          if terraform show tfplan 2>/dev/null | grep -q "aws_service_discovery_private_dns_namespace.main.*will be created"; then
-            echo "⚠️ WARNING: Plan shows namespace will be created, but it may already exist"
-            echo "This will fail with ConflictingDomainExists error"
-            echo "Attempting emergency import..."
-            
-            PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
-            NAMESPACE_ID=$(aws servicediscovery list-namespaces \
-              --region ${{ env.AWS_REGION }} \
-              --filters "Name=NAME,Values=${PROJECT_NAME}.local" \
-              --query 'Namespaces[?Type=="DNS_PRIVATE"].Id' \
-              --output text 2>/dev/null | head -n1 || echo "")
-            
-            if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
-              echo "Found namespace $NAMESPACE_ID, importing..."
-              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
-                module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" || true
-              echo "Re-running plan after import..."
-              terraform plan -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" -out=tfplan
-            fi
-          fi
+          # Verify namespace data source can be resolved
+          echo "Verifying namespace data source..."
+          terraform show tfplan 2>/dev/null | grep -q "data.aws_service_discovery_dns_namespace.existing" && \
+          echo "✓ Namespace data source found in plan" || \
+          echo "⚠️ Namespace data source not found in plan (may need to verify namespace exists)"
 
       - name: Terraform Apply
         working-directory: konecta_erp/terraform/ERP

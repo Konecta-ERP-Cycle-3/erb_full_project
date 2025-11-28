@@ -88,76 +88,12 @@ else
 fi
 echo ""
 
-# 1. Import Service Discovery Private DNS Namespace
+# 1. Service Discovery Private DNS Namespace
+# NOTE: Namespace is now referenced via data source, no import needed
 echo -e "${YELLOW}=== Service Discovery Namespace ===${NC}"
 NAMESPACE_NAME="${PROJECT_NAME}.local"
-CONFLICTING_HZ="Z02860191F105ZTTY3POH"
-
-# Try to find namespace by name
-NAMESPACE_ID=$(aws servicediscovery list-namespaces \
-    --region "$AWS_REGION" \
-    --filters "Name=NAME,Values=$NAMESPACE_NAME" \
-    --query 'Namespaces[?Type=="DNS_PRIVATE"].Id' \
-    --output text 2>/dev/null | head -n1 || echo "")
-
-# If not found by name, try to find by hosted zone
-if [ -z "$NAMESPACE_ID" ] || [ "$NAMESPACE_ID" = "None" ]; then
-    echo "Namespace not found by name, checking all namespaces for hosted zone $CONFLICTING_HZ..."
-    ALL_NAMESPACES=$(aws servicediscovery list-namespaces \
-        --region "$AWS_REGION" \
-        --filters "Name=TYPE,Values=DNS_PRIVATE" \
-        --query 'Namespaces[*].[Id,Name,Properties.DnsProperties.HostedZoneId]' \
-        --output text 2>/dev/null || echo "")
-    
-    if [ -n "$ALL_NAMESPACES" ]; then
-        echo "Found namespaces:"
-        echo "$ALL_NAMESPACES"
-        NAMESPACE_WITH_HZ=$(echo "$ALL_NAMESPACES" | grep "$CONFLICTING_HZ" | awk '{print $1}' | head -n1 || echo "")
-        if [ -n "$NAMESPACE_WITH_HZ" ]; then
-            NAMESPACE_ID="$NAMESPACE_WITH_HZ"
-            echo "Found namespace $NAMESPACE_ID associated with hosted zone $CONFLICTING_HZ"
-        fi
-    fi
-fi
-
-if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
-    import_resource "module.ecs.aws_service_discovery_private_dns_namespace.main" "$NAMESPACE_ID" "Service Discovery Namespace" || true
-else
-    echo -e "${YELLOW}⚠${NC} Namespace $NAMESPACE_NAME not found in AWS"
-    # Check if there's a conflicting hosted zone blocking creation
-    if [ -n "$VPC_ID" ]; then
-        echo "Checking for conflicting hosted zone..."
-        HOSTED_ZONE_ID=$(aws route53 list-hosted-zones-by-vpc \
-            --vpc-id "$VPC_ID" \
-            --vpc-region "$AWS_REGION" \
-            --query "HostedZoneSummaries[?Name=='$NAMESPACE_NAME.'].HostedZoneId" \
-            --output text 2>/dev/null | head -n1 || echo "")
-        
-        if [ -z "$HOSTED_ZONE_ID" ] || [ "$HOSTED_ZONE_ID" = "None" ]; then
-            # Try the specific conflicting hosted zone
-            HOSTED_ZONE_ID="$CONFLICTING_HZ"
-            ASSOCIATED=$(aws route53 list-hosted-zones-by-vpc \
-                --vpc-id "$VPC_ID" \
-                --vpc-region "$AWS_REGION" \
-                --query "HostedZoneSummaries[?HostedZoneId=='$HOSTED_ZONE_ID'].HostedZoneId" \
-                --output text 2>/dev/null | head -n1 || echo "")
-            if [ -z "$ASSOCIATED" ] || [ "$ASSOCIATED" = "None" ]; then
-                HOSTED_ZONE_ID=""
-            fi
-        fi
-        
-        if [ -n "$HOSTED_ZONE_ID" ] && [ "$HOSTED_ZONE_ID" != "None" ]; then
-            echo -e "${YELLOW}⚠${NC} Found conflicting hosted zone: $HOSTED_ZONE_ID"
-            echo "Attempting to disassociate hosted zone from VPC to allow namespace creation..."
-            aws route53 disassociate-vpc-from-hosted-zone \
-                --hosted-zone-id "$HOSTED_ZONE_ID" \
-                --vpc VPCRegion="$AWS_REGION",VPCId="$VPC_ID" 2>&1 && \
-            echo -e "${GREEN}✓${NC} Successfully disassociated hosted zone" || \
-            echo -e "${RED}✗${NC} Failed to disassociate hosted zone (may need manual cleanup)"
-        fi
-    fi
-    echo "Terraform will attempt to create the namespace."
-fi
+echo "Namespace is referenced via data source (data.aws_service_discovery_dns_namespace.existing)"
+echo "No import needed - Terraform will reference the existing namespace automatically"
 echo ""
 
 # 2. Import Application Load Balancer
