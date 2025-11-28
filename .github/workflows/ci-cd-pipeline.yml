@@ -301,9 +301,9 @@ jobs:
 
       - name: Terraform Plan
         working-directory: konecta_erp/terraform/ERP
-        run: |
-          terraform plan -var-file=dev.tfvars -out=tfplan
         continue-on-error: true
+        run: |
+          terraform plan -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" -out=tfplan
 
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
@@ -448,7 +448,7 @@ jobs:
           if [ -n "$NAMESPACE_ID" ] && [ "$NAMESPACE_ID" != "None" ]; then
             echo "Found existing namespace: $NAMESPACE_ID"
             echo "Attempting to import into Terraform state..."
-            terraform import module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" 2>&1 && \
+            terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" module.ecs.aws_service_discovery_private_dns_namespace.main "$NAMESPACE_ID" 2>&1 && \
             echo "✓ Successfully imported namespace into Terraform state." || {
               echo "⚠️ Import failed. Error details above."
             }
@@ -493,7 +493,7 @@ jobs:
           if [ -n "$LB_ARN" ] && [ "$LB_ARN" != "None" ]; then
             echo "Found existing load balancer: $LB_ARN"
             echo "Attempting to import into Terraform state..."
-            terraform import module.ecs.aws_lb.main "$LB_ARN" 2>&1 && \
+            terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" module.ecs.aws_lb.main "$LB_ARN" 2>&1 && \
             echo "✓ Successfully imported load balancer into Terraform state." || {
               echo "⚠️ Import failed. Error details above."
               echo "Note: Load balancers cannot be deleted if they have active listeners or target groups."
@@ -527,7 +527,7 @@ jobs:
           if [ -n "$TG_ARN" ] && [ "$TG_ARN" != "None" ]; then
             echo "Found existing target group: $TG_ARN"
             echo "Attempting to import into Terraform state..."
-            terraform import module.ecs.aws_lb_target_group.api_gateway_tg "$TG_ARN" 2>&1 && \
+            terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" module.ecs.aws_lb_target_group.api_gateway_tg "$TG_ARN" 2>&1 && \
             echo "✓ Successfully imported target group into Terraform state." || {
               echo "⚠️ Import failed. Checking if target group is attached to a load balancer..."
               # Check if attached to any load balancer
@@ -586,13 +586,18 @@ jobs:
         continue-on-error: true
         run: |
           echo "Refreshing Terraform state to sync with AWS..."
-          terraform refresh -var-file=dev.tfvars || echo "Refresh completed with warnings"
+          terraform refresh -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" || echo "Refresh completed with warnings"
+
+      - name: Terraform Plan
+        working-directory: konecta_erp/terraform/ERP
+        run: |
+          terraform plan -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" -out=tfplan
 
       - name: Terraform Apply
         working-directory: konecta_erp/terraform/ERP
         timeout-minutes: 30
         run: |
-          terraform apply -auto-approve -var-file=dev.tfvars
+          terraform apply -auto-approve -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}"
 
       - name: Get ALB URL
         id: get-alb-url

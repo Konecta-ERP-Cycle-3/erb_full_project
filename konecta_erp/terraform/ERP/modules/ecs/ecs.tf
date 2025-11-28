@@ -397,6 +397,10 @@ resource "aws_service_discovery_private_dns_namespace" "main" {
   name        = "${var.project_name}.local"
   description = "Service discovery namespace for ${var.project_name}"
   vpc         = var.vpc_id
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_service_discovery_service" "api_gateway" {
@@ -826,6 +830,10 @@ resource "aws_lb" "main" {
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
   subnets            = var.public_subnet_ids
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_lb_target_group" "api_gateway_tg" {
@@ -843,6 +851,10 @@ resource "aws_lb_target_group" "api_gateway_tg" {
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 3
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 

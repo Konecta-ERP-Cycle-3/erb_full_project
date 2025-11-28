@@ -27,4 +27,9 @@ resource "aws_db_instance" "this" {
   tags = {
     Name = "${var.project_name}-${var.environment}-rds"
   }
+
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes  = [password]
+  }
 }
