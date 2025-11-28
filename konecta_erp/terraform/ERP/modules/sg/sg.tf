@@ -53,63 +53,63 @@ resource "aws_security_group" "backend_ecs" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 7280  # Authentication Service
+    from_port       = 7280 # Authentication Service
     to_port         = 7280
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id]
   }
 
   ingress {
-    from_port       = 5078  # User Management Service
+    from_port       = 5078 # User Management Service
     to_port         = 5078
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id]
   }
 
   ingress {
-    from_port       = 5003  # Finance Service
+    from_port       = 5003 # Finance Service
     to_port         = 5003
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
   }
 
   ingress {
-    from_port       = 5005  # HR Service
+    from_port       = 5005 # HR Service
     to_port         = 5005
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
   }
 
   ingress {
-    from_port       = 5020  # Inventory Service
+    from_port       = 5020 # Inventory Service
     to_port         = 5020
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
   }
 
   ingress {
-    from_port       = 8085  # Reporting Service
+    from_port       = 8085 # Reporting Service
     to_port         = 8085
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
   }
 
   ingress {
-    from_port       = 8888  # Config Server
+    from_port       = 8888 # Config Server
     to_port         = 8888
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
   }
 
   ingress {
-    from_port       = 5672  # RabbitMQ AMQP
+    from_port       = 5672 # RabbitMQ AMQP
     to_port         = 5672
     protocol        = "tcp"
     security_groups = [aws_security_group.backend_ecs.id]
   }
 
   ingress {
-    from_port       = 8500  # Consul
+    from_port       = 8500 # Consul
     to_port         = 8500
     protocol        = "tcp"
     security_groups = [aws_security_group.api_gateway.id, aws_security_group.backend_ecs.id]
@@ -136,7 +136,7 @@ resource "aws_security_group" "rds" {
     from_port       = 1433
     to_port         = 1433
     protocol        = "tcp"
-    security_groups = [aws_security_group.backend_ecs.id]  # From backend services
+    security_groups = [aws_security_group.backend_ecs.id] # From backend services
   }
 
   tags = {
@@ -153,7 +153,7 @@ resource "aws_security_group" "influxdb_sg" {
     from_port   = 8086
     to_port     = 8086
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]     # You can restrict this later
+    cidr_blocks = ["0.0.0.0/0"] # You can restrict this later
   }
 
   ingress {
@@ -161,7 +161,7 @@ resource "aws_security_group" "influxdb_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]     # Allow remote SSH
+    cidr_blocks = ["0.0.0.0/0"] # Allow remote SSH
   }
 
   egress {
@@ -182,7 +182,7 @@ resource "aws_security_group" "grafana_sg" {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]    # You can restrict this later
+    cidr_blocks = ["0.0.0.0/0"] # You can restrict this later
   }
 
   ingress {

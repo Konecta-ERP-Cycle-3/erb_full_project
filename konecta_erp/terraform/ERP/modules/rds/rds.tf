@@ -4,10 +4,10 @@ resource "aws_db_subnet_group" "this" {
 }
 
 resource "aws_db_instance" "this" {
-  identifier              = "${var.project_name}-${var.environment}-db"
-  engine                  = "sqlserver-ex"
-  engine_version          = "15.00"
-  instance_class          = "db.t3.micro"
+  identifier        = "${var.project_name}-${var.environment}-db"
+  engine            = "sqlserver-ex"
+  engine_version    = "15.00"
+  instance_class    = "db.t3.micro"
   allocated_storage = 20
   storage_type      = "gp2"
   storage_encrypted = false

@@ -51,17 +51,17 @@ module "ecs" {
 
   ecs_execution_role_arn = module.iam.ecs_execution_role_arn
 
-  aws_region                      = var.aws_region
-  project_name                    = var.project_name
-  environment                     = var.environment
-  api_gateway_image               = var.api_gateway_image
-  config_server_image             = var.config_server_image
-  authentication_service_image    = var.authentication_service_image
-  user_management_service_image   = var.user_management_service_image
-  finance_service_image           = var.finance_service_image
-  hr_service_image                = var.hr_service_image
-  inventory_service_image         = var.inventory_service_image
-  reporting_service_image         = var.reporting_service_image
+  aws_region                    = var.aws_region
+  project_name                  = var.project_name
+  environment                   = var.environment
+  api_gateway_image             = var.api_gateway_image
+  config_server_image           = var.config_server_image
+  authentication_service_image  = var.authentication_service_image
+  user_management_service_image = var.user_management_service_image
+  finance_service_image         = var.finance_service_image
+  hr_service_image              = var.hr_service_image
+  inventory_service_image       = var.inventory_service_image
+  reporting_service_image       = var.reporting_service_image
 
   db_username = var.db_username
   db_password = var.db_password

@@ -684,8 +684,8 @@ resource "aws_ecs_task_definition" "rabbitmq" {
 
   container_definitions = jsonencode([
     {
-      name  = "rabbitmq"
-      image = "rabbitmq:3.13-management"
+      name      = "rabbitmq"
+      image     = "rabbitmq:3.13-management"
       essential = true
       portMappings = [
         {
@@ -726,8 +726,8 @@ resource "aws_ecs_task_definition" "consul" {
 
   container_definitions = jsonencode([
     {
-      name  = "consul"
-      image = "hashicorp/consul:1.18"
+      name      = "consul"
+      image     = "hashicorp/consul:1.18"
       essential = true
       portMappings = [
         {

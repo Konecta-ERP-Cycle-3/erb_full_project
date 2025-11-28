@@ -43,7 +43,7 @@ variable "environment" {
 variable "db_username" {
   description = "RDS database username"
   type        = string
-  default     = "dbuser"  # CHANGED: From "admin" to avoid reserved word
+  default     = "dbuser" # CHANGED: From "admin" to avoid reserved word
 }
 
 variable "db_password" {
