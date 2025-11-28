@@ -371,11 +371,18 @@ jobs:
           export PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
           export AWS_REGION=${{ env.AWS_REGION }}
           export DB_PASSWORD="${{ secrets.AWS_DB_PASSWORD }}"
-          ./import-resources.sh
+          
+          # Run import script and capture output
+          ./import-resources.sh 2>&1 | tee import-output.log || true
           
           echo ""
           echo "=== Import Summary ==="
           terraform state list 2>/dev/null | grep -E "(namespace|lb|target_group)" || echo "No matching resources in state"
+          
+          # Show import output for debugging
+          echo ""
+          echo "=== Import Script Output ==="
+          cat import-output.log 2>/dev/null || echo "No import log found"
 
       - name: Handle Orphaned Service Discovery Namespace
         working-directory: konecta_erp/terraform/ERP
