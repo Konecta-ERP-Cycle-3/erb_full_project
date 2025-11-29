@@ -259,7 +259,7 @@ resource "aws_ecs_task_definition" "api_gateway" {
     }]
     environment = [
       { name = "SPRING_APPLICATION_NAME", value = "api-gateway" },
-      { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
+      { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
       { name = "SPRING_CLOUD_CONFIG_FAILFAST", value = "true" },
       { name = "CONSUL_HOST", value = "consul.${aws_service_discovery_private_dns_namespace.main.name}" },
       { name = "CONSUL_PORT", value = "8500" },
@@ -302,7 +302,7 @@ resource "aws_ecs_task_definition" "reporting_service" {
     }]
     environment = [
       { name = "SPRING_APPLICATION_NAME", value = "reporting-service" },
-      { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${data.aws_service_discovery_dns_namespace.existing.name}:8888" },
+      { name = "SPRING_CLOUD_CONFIG_URI", value = "http://config-server.${aws_service_discovery_private_dns_namespace.main.name}:8888" },
       { name = "SPRING_CLOUD_CONFIG_FAILFAST", value = "true" },
       { name = "FINANCE_SERVICE_URI", value = "http://finance-service.${aws_service_discovery_private_dns_namespace.main.name}:5003" },
       { name = "HR_SERVICE_URI", value = "http://hr-service.${aws_service_discovery_private_dns_namespace.main.name}:5005" },

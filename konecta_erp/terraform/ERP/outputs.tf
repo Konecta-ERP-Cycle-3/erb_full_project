@@ -19,14 +19,9 @@ output "cluster_id" {
   value       = module.ecs.cluster_id
 }
 
-output "frontend_service_name" {
-  description = "Frontend ECS Service Name"
-  value       = module.ecs.frontend_service_name
-}
-
-output "backend_service_name" {
-  description = "Backend ECS Service Name"
-  value       = module.ecs.backend_service_name
+output "api_gateway_service_name" {
+  description = "API Gateway ECS Service Name"
+  value       = module.ecs.api_gateway_service_name
 }
 
 output "alb_dns_name" {
