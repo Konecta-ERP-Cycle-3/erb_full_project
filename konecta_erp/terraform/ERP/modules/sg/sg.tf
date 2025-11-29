@@ -23,14 +23,14 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# API Gateway Security Group (Public) - Entry Point
-resource "aws_security_group" "api_gateway" {
-  name_prefix = "${var.project_name}-${var.environment}-api-gateway-sg-"
+# Frontend ECS Security Group (Public) - ADDED EGRESS TO BACKEND
+resource "aws_security_group" "frontend_ecs" {
+  name_prefix = "${var.project_name}-${var.environment}-frontend-ecs-sg-"
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 8080
-    to_port         = 8080
+    from_port       = 80
+    to_port         = 80
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
@@ -39,94 +39,31 @@ resource "aws_security_group" "api_gateway" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # Allows frontend to call backend internally
   }
 
   tags = {
-    Name = "${var.project_name}-${var.environment}-api-gateway-sg"
+    Name = "${var.project_name}-${var.environment}-frontend-ecs-sg"
   }
 }
 
-# Backend ECS Security Group (Private) - Allows inter-service communication
+# Backend ECS Security Group (Private) - FIXED: Ingress from frontend, not RDS
 resource "aws_security_group" "backend_ecs" {
   name_prefix = "${var.project_name}-${var.environment}-backend-ecs-sg-"
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 7280 # Authentication Service
-    to_port         = 7280
+    from_port       = 3000  # UPDATED: API port
+    to_port         = 3000
     protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-  }
-
-  ingress {
-    from_port       = 5078 # User Management Service
-    to_port         = 5078
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-  }
-
-  ingress {
-    from_port       = 5003 # Finance Service
-    to_port         = 5003
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG is allowed by default
-  }
-
-  ingress {
-    from_port       = 5005 # HR Service
-    to_port         = 5005
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG is allowed by default
-  }
-
-  ingress {
-    from_port       = 5020 # Inventory Service
-    to_port         = 5020
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG is allowed by default
-  }
-
-  ingress {
-    from_port       = 8085 # Reporting Service
-    to_port         = 8085
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG is allowed by default
-  }
-
-  ingress {
-    from_port       = 8888 # Config Server
-    to_port         = 8888
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG is allowed by default
-  }
-
-  ingress {
-    from_port       = 5672 # RabbitMQ AMQP
-    to_port         = 5672
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG (backend_ecs) is allowed by default
-  }
-
-  ingress {
-    from_port       = 8500 # Consul
-    to_port         = 8500
-    protocol        = "tcp"
-    security_groups = [aws_security_group.api_gateway.id]
-    # Note: Inter-service communication within same SG is allowed by default
+    security_groups = [aws_security_group.frontend_ecs.id]  # FIXED: From frontend, not RDS
   }
 
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]  # Allows outbound to RDS/internet
   }
 
   tags = {
@@ -134,16 +71,16 @@ resource "aws_security_group" "backend_ecs" {
   }
 }
 
-# RDS Security Group (Private) - SQL Server
+# RDS Security Group (Private)
 resource "aws_security_group" "rds" {
   name_prefix = "${var.project_name}-${var.environment}-rds-sg-"
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 1433
-    to_port         = 1433
+    from_port       = 5432
+    to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.backend_ecs.id] # From backend services
+    security_groups = [aws_security_group.backend_ecs.id]  # Correct: From backend
   }
 
   tags = {
@@ -160,7 +97,7 @@ resource "aws_security_group" "influxdb_sg" {
     from_port   = 8086
     to_port     = 8086
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # You can restrict this later
+    cidr_blocks = ["0.0.0.0/0"]     # You can restrict this later
   }
 
   ingress {
@@ -168,7 +105,7 @@ resource "aws_security_group" "influxdb_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow remote SSH
+    cidr_blocks = ["0.0.0.0/0"]     # Allow remote SSH
   }
 
   egress {
@@ -189,7 +126,7 @@ resource "aws_security_group" "grafana_sg" {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # You can restrict this later
+    cidr_blocks = ["0.0.0.0/0"]    # You can restrict this later
   }
 
   ingress {

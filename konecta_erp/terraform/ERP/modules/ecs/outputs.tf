@@ -1,24 +1,24 @@
 output "cluster_id" {
-  description = "ECS Cluster ID"
-  value       = aws_ecs_cluster.main.id
-}
-
-output "api_gateway_service_name" {
-  description = "API Gateway ECS Service Name"
-  value       = aws_ecs_service.api_gateway.name
-}
-
-output "alb_dns_name" {
-  description = "ALB DNS Name"
-  value       = try(aws_lb.main.dns_name, null)
-}
-
-output "backend_service_name" {
-  description = "Backend ECS Service Name (deprecated - use api_gateway_service_name)"
-  value       = null
+  value = aws_ecs_cluster.main.id
 }
 
 output "frontend_service_name" {
-  description = "Frontend ECS Service Name (deprecated)"
-  value       = null
+  value = aws_ecs_service.frontend.name
+}
+
+output "backend_service_name" {
+  value = aws_ecs_service.backend.name
+}
+
+output "alb_dns_name" {
+  value = aws_lb.frontend.dns_name
+}
+
+# NEW OUTPUTS (if needed)
+output "frontend_desired_count" {
+  value = aws_ecs_service.frontend.desired_count
+}
+
+output "backend_desired_count" {
+  value = aws_ecs_service.backend.desired_count
 }
