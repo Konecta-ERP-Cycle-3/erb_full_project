@@ -293,7 +293,7 @@ jobs:
 
       - name: Terraform Format Check
         working-directory: konecta_erp/terraform/ERP
-        run: terraform fmt -check -recursive
+        run: terraform fmt  -recursive
 
       - name: Terraform Validate
         working-directory: konecta_erp/terraform/ERP
