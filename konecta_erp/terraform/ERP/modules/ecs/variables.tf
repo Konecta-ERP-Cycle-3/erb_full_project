@@ -38,12 +38,55 @@ variable "aws_region" {
   type = string 
 }
 
-variable "frontend_image" { 
-  type = string 
+# Docker Images for All Services
+variable "authentication_service_image" {
+  type = string
+  description = "Docker image for authentication service"
 }
 
-variable "backend_image"  { 
-  type = string 
+variable "user_management_service_image" {
+  type = string
+  description = "Docker image for user management service"
+}
+
+variable "finance_service_image" {
+  type = string
+  description = "Docker image for finance service"
+}
+
+variable "hr_service_image" {
+  type = string
+  description = "Docker image for hr service"
+}
+
+variable "inventory_service_image" {
+  type = string
+  description = "Docker image for inventory service"
+}
+
+variable "api_gateway_image" {
+  type = string
+  description = "Docker image for API gateway"
+}
+
+variable "reporting_service_image" {
+  type = string
+  description = "Docker image for reporting service"
+}
+
+variable "config_server_image" {
+  type = string
+  description = "Docker image for config server"
+}
+
+variable "hr_model_image" {
+  type = string
+  description = "Docker image for HR model (AI)"
+}
+
+variable "prophet_model_image" {
+  type = string
+  description = "Docker image for Prophet model (AI)"
 }
 
 variable "db_username" { 

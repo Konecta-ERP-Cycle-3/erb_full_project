@@ -209,12 +209,23 @@ jobs:
     strategy:
       matrix:
         service:
+          # .NET Backend Services
           - name: authentication-service
             context: konecta_erp
             dockerfile: konecta_erp/backend/AuthenticationService/Dockerfile
           - name: user-management-service
             context: konecta_erp
             dockerfile: konecta_erp/backend/UserManagementService/Dockerfile
+          - name: finance-service
+            context: konecta_erp
+            dockerfile: konecta_erp/backend/FinanceService/Dockerfile
+          - name: hr-service
+            context: konecta_erp
+            dockerfile: konecta_erp/backend/HrService/Dockerfile
+          - name: inventory-service
+            context: konecta_erp
+            dockerfile: konecta_erp/backend/InventoryService/Dockerfile
+          # Java/Spring Boot Services
           - name: api-gateway
             context: konecta_erp/backend/ApiGateWay
             dockerfile: konecta_erp/backend/ApiGateWay/Dockerfile
@@ -224,6 +235,13 @@ jobs:
           - name: config-server
             context: konecta_erp/backend/config
             dockerfile: konecta_erp/backend/config/Dockerfile
+          # AI/ML Models
+          - name: hr-model
+            context: konecta_erp/Ai/artifacts/hr_model
+            dockerfile: konecta_erp/Ai/artifacts/hr_model/Dockerfile
+          - name: prophet-model
+            context: konecta_erp/Ai/artifacts/prophet_model
+            dockerfile: konecta_erp/Ai/artifacts/prophet_model/Dockerfile
 
     steps:
       - name: Checkout code
@@ -722,20 +740,26 @@ jobs:
         run: |
           echo "## 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployed Services:" >> $GITHUB_STEP_SUMMARY
-          echo "- API Gateway" >> $GITHUB_STEP_SUMMARY
-          echo "- Config Server" >> $GITHUB_STEP_SUMMARY
-          echo "- Authentication Service" >> $GITHUB_STEP_SUMMARY
-          echo "- User Management Service" >> $GITHUB_STEP_SUMMARY
-          echo "- Finance Service" >> $GITHUB_STEP_SUMMARY
-          echo "- HR Service" >> $GITHUB_STEP_SUMMARY
-          echo "- Inventory Service" >> $GITHUB_STEP_SUMMARY
-          echo "- Reporting Service" >> $GITHUB_STEP_SUMMARY
-          echo "- RabbitMQ" >> $GITHUB_STEP_SUMMARY
-          echo "- Consul" >> $GITHUB_STEP_SUMMARY
+          echo "### Built Docker Images (10 Total):" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Backend Services (.NET):" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ authentication-service" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ user-management-service" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ finance-service" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ hr-service" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ inventory-service" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Java/Spring Boot Services:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ api-gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ reporting-service" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ config-server" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### AI/ML Models:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ hr-model" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ prophet-model" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Docker Images:" >> $GITHUB_STEP_SUMMARY
-          echo "All images pushed to: \`${{ env.DOCKER_USERNAME }}/*:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "All images pushed to Docker Hub: \`${{ env.DOCKER_USERNAME }}/*:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Infrastructure:" >> $GITHUB_STEP_SUMMARY
           echo "- AWS ECS Fargate Cluster" >> $GITHUB_STEP_SUMMARY

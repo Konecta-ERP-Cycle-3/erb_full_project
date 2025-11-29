@@ -54,8 +54,18 @@ module "ecs" {
   aws_region    = var.aws_region
   project_name  = var.project_name
   environment   = var.environment
-  frontend_image = var.frontend_image
-  backend_image  = var.backend_image
+
+  # Service Images
+  authentication_service_image = var.authentication_service_image
+  user_management_service_image = var.user_management_service_image
+  finance_service_image        = var.finance_service_image
+  hr_service_image             = var.hr_service_image
+  inventory_service_image      = var.inventory_service_image
+  api_gateway_image            = var.api_gateway_image
+  reporting_service_image      = var.reporting_service_image
+  config_server_image          = var.config_server_image
+  hr_model_image               = var.hr_model_image
+  prophet_model_image          = var.prophet_model_image
 
   db_username = var.db_username
   db_password = var.db_password
