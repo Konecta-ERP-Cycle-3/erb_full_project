@@ -416,4 +416,5 @@ resource "aws_ecs_task_definition" "hr_model" {
 
   lifecycle {
     ignore_changes = [container_definitions]
-```
+  }
+}
