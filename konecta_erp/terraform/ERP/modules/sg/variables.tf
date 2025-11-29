@@ -1,12 +1,27 @@
-# modules/sg/variables.tf
 variable "vpc_id" {
-  type = string
+  description = "VPC ID"
+  type        = string
 }
 
 variable "project_name" {
-  type = string
+  description = "Project name"
+  type        = string
 }
 
 variable "environment" {
-  type = string
+  description = "Environment name (dev/prod)"
+  type        = string
+}
+
+# ECS container ports
+variable "frontend_port" {
+  description = "Port for frontend ECS container"
+  type        = number
+  default     = 80
+}
+
+variable "backend_port" {
+  description = "Port for backend ECS container"
+  type        = number
+  default     = 3000
 }

@@ -63,3 +63,21 @@ variable "backend_image" {
   type        = string
   default     = "postgres:13"
 }
+
+variable "num_clusters" {
+  description = "Number of ECS clusters to create"
+  type        = number
+  default     = 10
+}
+
+variable "frontend_desired_count" {
+  description = "Number of desired frontend ECS tasks per cluster"
+  type        = number
+  default     = 2
+}
+
+variable "backend_desired_count" {
+  description = "Number of desired backend ECS tasks per cluster"
+  type        = number
+  default     = 8
+}

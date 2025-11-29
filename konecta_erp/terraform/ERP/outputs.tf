@@ -1,4 +1,19 @@
-# terraform/outputs.tf
+output "cluster_ids" {
+  description = "IDs of all ECS clusters"
+  value       = module.ecs.cluster_ids
+}
+
+output "frontend_service_names" {
+  description = "Names of all frontend ECS services"
+  value       = module.ecs.frontend_service_names
+}
+
+output "backend_service_names" {
+  description = "Names of all backend ECS services"
+  value       = module.ecs.backend_service_names
+}
+
+# VPC outputs
 output "vpc_id" {
   description = "VPC ID"
   value       = module.vpc.vpc_id
@@ -14,26 +29,7 @@ output "private_subnet_ids" {
   value       = module.vpc.private_subnet_ids
 }
 
-output "cluster_id" {
-  description = "ECS Cluster ID"
-  value       = module.ecs.cluster_id
-}
-
-output "frontend_service_name" {
-  description = "Frontend ECS Service Name"
-  value       = module.ecs.frontend_service_name
-}
-
-output "backend_service_name" {
-  description = "Backend ECS Service Name"
-  value       = module.ecs.backend_service_name
-}
-
-output "alb_dns_name" {
-  description = "ALB DNS Name"
-  value       = module.ecs.alb_dns_name
-}
-
+# RDS output
 output "rds_endpoint" {
   value = module.rds.rds_endpoint
 }

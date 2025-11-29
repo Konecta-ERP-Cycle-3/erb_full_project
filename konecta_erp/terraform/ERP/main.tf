@@ -1,3 +1,6 @@
+##############################################
+# VPC MODULE
+##############################################
 module "vpc" {
   source = "./modules/vpc"
 
@@ -10,6 +13,9 @@ module "vpc" {
   environment  = var.environment
 }
 
+##############################################
+# SECURITY GROUPS MODULE
+##############################################
 module "security_groups" {
   source = "./modules/sg"
 
@@ -18,6 +24,9 @@ module "security_groups" {
   environment  = var.environment
 }
 
+##############################################
+# IAM MODULE
+##############################################
 module "iam" {
   source = "./modules/iam"
 
@@ -25,6 +34,9 @@ module "iam" {
   environment  = var.environment
 }
 
+##############################################
+# RDS MODULE
+##############################################
 module "rds" {
   source = "./modules/rds"
 
@@ -38,26 +50,34 @@ module "rds" {
   db_name     = "dbuser"
 }
 
+##############################################
+# ECS MODULE (with ALB handled internally)
+##############################################
 module "ecs" {
   source = "./modules/ecs"
 
-  vpc_id             = module.vpc.vpc_id
-  public_subnet_ids  = module.vpc.public_subnet_ids
-  private_subnet_ids = module.vpc.private_subnet_ids
-
-  alb_sg_id      = module.security_groups.alb_sg_id
-  frontend_sg_id = module.security_groups.frontend_sg_id
-  backend_sg_id  = module.security_groups.backend_sg_id
-
   ecs_execution_role_arn = module.iam.ecs_execution_role_arn
 
-  aws_region    = var.aws_region
-  project_name  = var.project_name
-  environment   = var.environment
+  aws_region   = var.aws_region
+  project_name = var.project_name
+  environment  = var.environment
+
+  num_clusters = var.num_clusters
+
+  # NEW: Pass VPC & Subnet info
+  vpc_id            = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
+
+  # Security groups
+  ecs_service_sg = module.security_groups.frontend_ecs_sg_id
+  alb_sg_id      = module.security_groups.alb_sg_id
+
+  # Docker images
   frontend_image = var.frontend_image
   backend_image  = var.backend_image
 
-  db_username = var.db_username
-  db_password = var.db_password
-  rds_endpoint = module.rds.rds_endpoint
+  # Desired counts
+  frontend_desired_count = var.frontend_desired_count
+  backend_desired_count  = var.backend_desired_count
 }

@@ -1,0 +1,54 @@
+{
+  "version": 4,
+  "terraform_version": "1.13.2",
+  "serial": 565,
+  "lineage": "d8b8f24e-efc4-7393-3bea-079a6558bf04",
+  "outputs": {},
+  "resources": [
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:482352877046:vpc/vpc-0189ed349aab56746",
+            "assign_generated_ipv6_cidr_block": false,
+            "cidr_block": "10.0.0.0/16",
+            "default_network_acl_id": "acl-0983186da7ed7598c",
+            "default_route_table_id": "rtb-047a8be4ae8df2d93",
+            "default_security_group_id": "sg-0fd2d9984d802b189",
+            "dhcp_options_id": "dopt-0c28fec763ea0a635",
+            "enable_dns_hostnames": false,
+            "enable_dns_support": true,
+            "enable_network_address_usage_metrics": false,
+            "id": "vpc-0189ed349aab56746",
+            "instance_tenancy": "default",
+            "ipv4_ipam_pool_id": null,
+            "ipv4_netmask_length": null,
+            "ipv6_association_id": "",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_network_border_group": "",
+            "ipv6_ipam_pool_id": "",
+            "ipv6_netmask_length": 0,
+            "main_route_table_id": "rtb-047a8be4ae8df2d93",
+            "owner_id": "482352877046",
+            "tags": {
+              "Name": "konecta-ass1-dev-vpc"
+            },
+            "tags_all": {
+              "Name": "konecta-ass1-dev-vpc"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

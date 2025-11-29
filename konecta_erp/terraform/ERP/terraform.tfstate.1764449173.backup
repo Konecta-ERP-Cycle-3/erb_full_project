@@ -1,0 +1,119 @@
+{
+  "version": 4,
+  "terraform_version": "1.13.2",
+  "serial": 564,
+  "lineage": "d8b8f24e-efc4-7393-3bea-079a6558bf04",
+  "outputs": {},
+  "resources": [
+    {
+      "module": "module.security_groups",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "alb",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:482352877046:security-group/sg-0cadeb8200d25db00",
+            "description": "Managed by Terraform",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-0cadeb8200d25db00",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 80,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 80
+              }
+            ],
+            "name": "konecta-ass1-dev-alb-sg-20251124000457136600000002",
+            "name_prefix": "konecta-ass1-dev-alb-sg-",
+            "owner_id": "482352877046",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Name": "konecta-ass1-dev-alb-sg"
+            },
+            "tags_all": {
+              "Name": "konecta-ass1-dev-alb-sg"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0189ed349aab56746"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "module.vpc.aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-1:482352877046:vpc/vpc-0189ed349aab56746",
+            "assign_generated_ipv6_cidr_block": false,
+            "cidr_block": "10.0.0.0/16",
+            "default_network_acl_id": "acl-0983186da7ed7598c",
+            "default_route_table_id": "rtb-047a8be4ae8df2d93",
+            "default_security_group_id": "sg-0fd2d9984d802b189",
+            "dhcp_options_id": "dopt-0c28fec763ea0a635",
+            "enable_dns_hostnames": false,
+            "enable_dns_support": true,
+            "enable_network_address_usage_metrics": false,
+            "id": "vpc-0189ed349aab56746",
+            "instance_tenancy": "default",
+            "ipv4_ipam_pool_id": null,
+            "ipv4_netmask_length": null,
+            "ipv6_association_id": "",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_network_border_group": "",
+            "ipv6_ipam_pool_id": "",
+            "ipv6_netmask_length": 0,
+            "main_route_table_id": "rtb-047a8be4ae8df2d93",
+            "owner_id": "482352877046",
+            "tags": {
+              "Name": "konecta-ass1-dev-vpc"
+            },
+            "tags_all": {
+              "Name": "konecta-ass1-dev-vpc"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

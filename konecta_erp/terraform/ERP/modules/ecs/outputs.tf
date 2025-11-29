@@ -1,24 +1,19 @@
-output "cluster_id" {
-  value = aws_ecs_cluster.main.id
+output "cluster_ids" {
+  description = "IDs of all ECS clusters"
+  value       = [for c in aws_ecs_cluster.main : c.id]
 }
 
-output "frontend_service_name" {
-  value = aws_ecs_service.frontend.name
+output "frontend_service_names" {
+  description = "Names of all frontend ECS services"
+  value       = [for s in aws_ecs_service.frontend : s.name]
 }
 
-output "backend_service_name" {
-  value = aws_ecs_service.backend.name
+output "backend_service_names" {
+  description = "Names of all backend ECS services"
+  value       = [for s in aws_ecs_service.backend : s.name]
 }
 
 output "alb_dns_name" {
-  value = aws_lb.frontend.dns_name
-}
-
-# NEW OUTPUTS (if needed)
-output "frontend_desired_count" {
-  value = aws_ecs_service.frontend.desired_count
-}
-
-output "backend_desired_count" {
-  value = aws_ecs_service.backend.desired_count
+  description = "ALB DNS Name"
+  value       = aws_lb.alb.dns_name
 }
