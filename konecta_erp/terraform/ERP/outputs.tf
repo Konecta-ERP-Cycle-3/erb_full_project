@@ -1,4 +1,36 @@
-# terraform/outputs.tf
+# ECS Outputs
+output "cluster_id" {
+  description = "ECS Cluster ID"
+  value       = module.ecs.cluster_id
+}
+
+output "cluster_name" {
+  description = "ECS Cluster Name"
+  value       = module.ecs.cluster_name
+}
+
+output "alb_dns_name" {
+  description = "ALB DNS Name (API Gateway endpoint)"
+  value       = module.ecs.alb_dns_name
+}
+
+output "service_discovery_namespace" {
+  description = "Service Discovery Namespace for internal service communication"
+  value       = module.ecs.service_discovery_namespace
+}
+
+# Service Names
+output "api_gateway_service_name" {
+  description = "API Gateway Service Name"
+  value       = module.ecs.api_gateway_service_name
+}
+
+output "authentication_service_name" {
+  description = "Authentication Service Name"
+  value       = module.ecs.authentication_service_name
+}
+
+# VPC outputs
 output "vpc_id" {
   description = "VPC ID"
   value       = module.vpc.vpc_id
@@ -14,26 +46,8 @@ output "private_subnet_ids" {
   value       = module.vpc.private_subnet_ids
 }
 
-output "cluster_id" {
-  description = "ECS Cluster ID"
-  value       = module.ecs.cluster_id
-}
-
-output "frontend_service_name" {
-  description = "Frontend ECS Service Name"
-  value       = module.ecs.frontend_service_name
-}
-
-output "backend_service_name" {
-  description = "Backend ECS Service Name"
-  value       = module.ecs.backend_service_name
-}
-
-output "alb_dns_name" {
-  description = "ALB DNS Name"
-  value       = module.ecs.alb_dns_name
-}
-
+# RDS output
 output "rds_endpoint" {
-  value = module.rds.rds_endpoint
+  description = "RDS Database Endpoint"
+  value       = module.rds.rds_endpoint
 }

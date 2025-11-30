@@ -52,14 +52,130 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "frontend_image" {
-  description = "Docker image for frontend ECS task"
+# Service Images
+variable "authentication_service_image" {
+  description = "Docker image for authentication service"
   type        = string
-  default     = "nginx:latest"
+  default     = "mohamed710/authentication-service:latest"
 }
 
-variable "backend_image" {
-  description = "Docker image for backend ECS task"
+variable "user_management_service_image" {
+  description = "Docker image for user management service"
   type        = string
-  default     = "postgres:13"
+  default     = "mohamed710/user-management-service:latest"
+}
+
+variable "finance_service_image" {
+  description = "Docker image for finance service"
+  type        = string
+  default     = "mohamed710/finance-service:latest"
+}
+
+variable "hr_service_image" {
+  description = "Docker image for HR service"
+  type        = string
+  default     = "mohamed710/hr-service:latest"
+}
+
+variable "inventory_service_image" {
+  description = "Docker image for inventory service"
+  type        = string
+  default     = "mohamed710/inventory-service:latest"
+}
+
+variable "api_gateway_image" {
+  description = "Docker image for API Gateway"
+  type        = string
+  default     = "mohamed710/api-gateway:latest"
+}
+
+variable "reporting_service_image" {
+  description = "Docker image for reporting service"
+  type        = string
+  default     = "mohamed710/reporting-service:latest"
+}
+
+variable "config_server_image" {
+  description = "Docker image for config server"
+  type        = string
+  default     = "mohamed710/config-server:latest"
+}
+
+variable "hr_model_image" {
+  description = "Docker image for HR model service"
+  type        = string
+  default     = "mohamed710/hr-model:latest"
+}
+
+variable "prophet_model_image" {
+  description = "Docker image for Prophet model service"
+  type        = string
+  default     = "mohamed710/prophet-model:latest"
+}
+
+variable "num_clusters" {
+  description = "Number of ECS clusters to create (for high availability)"
+  type        = number
+  default     = 1
+}
+
+# Service Desired Counts
+variable "authentication_service_desired_count" {
+  description = "Number of desired authentication service tasks"
+  type        = number
+  default     = 2
+}
+
+variable "user_management_service_desired_count" {
+  description = "Number of desired user management service tasks"
+  type        = number
+  default     = 2
+}
+
+variable "finance_service_desired_count" {
+  description = "Number of desired finance service tasks"
+  type        = number
+  default     = 2
+}
+
+variable "hr_service_desired_count" {
+  description = "Number of desired HR service tasks"
+  type        = number
+  default     = 2
+}
+
+variable "inventory_service_desired_count" {
+  description = "Number of desired inventory service tasks"
+  type        = number
+  default     = 2
+}
+
+variable "api_gateway_desired_count" {
+  description = "Number of desired API Gateway tasks"
+  type        = number
+  default     = 2
+}
+
+variable "reporting_service_desired_count" {
+  description = "Number of desired reporting service tasks"
+  type        = number
+  default     = 2
+}
+
+variable "config_server_desired_count" {
+  description = "Number of desired config server tasks"
+  type        = number
+  default     = 1
+}
+
+variable "hr_model_desired_count" {
+  description = "Number of desired HR model service tasks"
+  type        = number
+  default     = 1
+}
+
+variable "prophet_model_desired_count" {
+  description = "Number of desired Prophet model service tasks"
+  type        = number
+  default     = 1
 }
