@@ -1,5 +1,5 @@
 aws_region     = "us-east-1"
-db_password    = "dy+lYeX$r6Com_53}g!p"
+db_password    = "KonectaERP2024!DevPass"
 
 # Docker Hub Authentication (to avoid rate limits)
 docker_hub_secret_arn = "arn:aws:secretsmanager:us-east-1:585768179815:secret:konecta-ass1-dev-docker-hub-credentials-oLW5ta"

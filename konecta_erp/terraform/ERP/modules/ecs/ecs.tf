@@ -5,8 +5,13 @@ locals {
   # RDS endpoint format: hostname:port, SQL Server needs: hostname,port
   rds_server = replace(var.rds_endpoint, ":", ",")
   
-  # Docker Hub repository credentials (conditional - only if secret ARN is provided)
-  docker_hub_credentials = var.docker_hub_secret_arn != "" ? {
+  # Docker Hub repository credentials (only for Docker Hub, not ECR)
+  # ECR uses IAM authentication automatically and doesn't support repositoryCredentials
+  # Check if we're using ECR by looking at the first image URL (all should be from same registry)
+  is_using_ecr = can(regex(".*\\.dkr\\.ecr\\..*\\.amazonaws\\.com", var.authentication_service_image))
+  
+  # Only add credentials if using Docker Hub (not ECR) and secret ARN is provided
+  docker_hub_credentials = (!local.is_using_ecr && var.docker_hub_secret_arn != "") ? {
     repositoryCredentials = {
       credentialsParameter = var.docker_hub_secret_arn
     }
