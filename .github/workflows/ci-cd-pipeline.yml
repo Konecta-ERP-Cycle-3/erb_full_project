@@ -808,6 +808,43 @@ jobs:
             ./import-resources.sh || true
           fi
 
+      - name: Cleanup Orphaned RabbitMQ Service Discovery Before Plan
+        working-directory: konecta_erp/terraform/ERP
+        continue-on-error: true
+        run: |
+          echo "=== Final cleanup of orphaned RabbitMQ service discovery ==="
+          NAMESPACE_ID=$(aws servicediscovery list-namespaces \
+            --filters Name=NAME,Values=konecta-ass1.local \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Namespaces[0].Id' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -z "$NAMESPACE_ID" ] || [ "$NAMESPACE_ID" = "None" ]; then
+            exit 0
+          fi
+          
+          # Check if in Terraform state
+          if terraform state list 2>/dev/null | grep -q "module.ecs.aws_service_discovery_service.rabbitmq"; then
+            echo "✓ RabbitMQ service discovery is in state"
+            exit 0
+          fi
+          
+          # Find and delete any orphaned RabbitMQ service discovery
+          echo "Searching for orphaned RabbitMQ service discovery..."
+          RABBITMQ_ID=$(aws servicediscovery list-services \
+            --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
+            --region ${{ env.AWS_REGION }} \
+            --query "Services[?Name=='rabbitmq'].Id" \
+            --output text 2>/dev/null | head -1 || echo "")
+          
+          if [ -n "$RABBITMQ_ID" ] && [ "$RABBITMQ_ID" != "None" ]; then
+            echo "Found orphaned RabbitMQ service discovery: $RABBITMQ_ID"
+            echo "Deleting to allow Terraform to recreate it..."
+            aws servicediscovery delete-service --id "$RABBITMQ_ID" --region ${{ env.AWS_REGION }} 2>&1 && \
+            echo "✓ Deleted orphaned RabbitMQ service discovery" || \
+            echo "⚠️ Could not delete (will attempt import during apply)"
+          fi
+
       - name: Terraform Plan
         working-directory: konecta_erp/terraform/ERP
         run: |
