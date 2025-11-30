@@ -41,8 +41,8 @@ module "ecr" {
 module "iam" {
   source = "./modules/iam"
 
-  project_name        = var.project_name
-  environment         = var.environment
+  project_name          = var.project_name
+  environment           = var.environment
   docker_hub_secret_arn = var.docker_hub_secret_arn
 }
 
@@ -60,7 +60,7 @@ module "rds" {
   db_username = var.db_username
   db_password = var.db_password
   # db_name not used for SQL Server - databases created separately after instance creation
-  db_name     = ""
+  db_name = ""
 }
 
 ##############################################
@@ -76,7 +76,7 @@ module "ecs" {
   environment  = var.environment
 
   # VPC & Subnet info
-  vpc_id            = module.vpc.vpc_id
+  vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   public_subnet_ids  = module.vpc.public_subnet_ids
 
@@ -85,28 +85,28 @@ module "ecs" {
   alb_sg_id      = module.security_groups.alb_sg_id
 
   # Service Images (using ECR repositories)
-  authentication_service_image = "${module.ecr.authentication_service_repository_url}:latest"
+  authentication_service_image  = "${module.ecr.authentication_service_repository_url}:latest"
   user_management_service_image = "${module.ecr.user_management_service_repository_url}:latest"
-  finance_service_image        = "${module.ecr.finance_service_repository_url}:latest"
-  hr_service_image             = "${module.ecr.hr_service_repository_url}:latest"
-  inventory_service_image      = "${module.ecr.inventory_service_repository_url}:latest"
-  api_gateway_image            = "${module.ecr.api_gateway_repository_url}:latest"
-  reporting_service_image      = "${module.ecr.reporting_service_repository_url}:latest"
-  config_server_image          = "${module.ecr.config_server_repository_url}:latest"
-  hr_model_image               = "${module.ecr.hr_model_repository_url}:latest"
-  prophet_model_image          = "${module.ecr.prophet_model_repository_url}:latest"
+  finance_service_image         = "${module.ecr.finance_service_repository_url}:latest"
+  hr_service_image              = "${module.ecr.hr_service_repository_url}:latest"
+  inventory_service_image       = "${module.ecr.inventory_service_repository_url}:latest"
+  api_gateway_image             = "${module.ecr.api_gateway_repository_url}:latest"
+  reporting_service_image       = "${module.ecr.reporting_service_repository_url}:latest"
+  config_server_image           = "${module.ecr.config_server_repository_url}:latest"
+  hr_model_image                = "${module.ecr.hr_model_repository_url}:latest"
+  prophet_model_image           = "${module.ecr.prophet_model_repository_url}:latest"
 
   # Service Desired Counts
-  authentication_service_desired_count = var.authentication_service_desired_count
+  authentication_service_desired_count  = var.authentication_service_desired_count
   user_management_service_desired_count = var.user_management_service_desired_count
-  finance_service_desired_count        = var.finance_service_desired_count
-  hr_service_desired_count             = var.hr_service_desired_count
-  inventory_service_desired_count      = var.inventory_service_desired_count
-  api_gateway_desired_count            = var.api_gateway_desired_count
-  reporting_service_desired_count      = var.reporting_service_desired_count
-  config_server_desired_count          = var.config_server_desired_count
-  hr_model_desired_count               = var.hr_model_desired_count
-  prophet_model_desired_count          = var.prophet_model_desired_count
+  finance_service_desired_count         = var.finance_service_desired_count
+  hr_service_desired_count              = var.hr_service_desired_count
+  inventory_service_desired_count       = var.inventory_service_desired_count
+  api_gateway_desired_count             = var.api_gateway_desired_count
+  reporting_service_desired_count       = var.reporting_service_desired_count
+  config_server_desired_count           = var.config_server_desired_count
+  hr_model_desired_count                = var.hr_model_desired_count
+  prophet_model_desired_count           = var.prophet_model_desired_count
 
   # Database Configuration
   rds_endpoint = module.rds.rds_endpoint

@@ -621,6 +621,52 @@ resource "aws_ecs_task_definition" "prophet_model" {
 }
 
 # ===========================
+# ECS Task Definitions - RabbitMQ
+# ===========================
+resource "aws_ecs_task_definition" "rabbitmq" {
+  family                   = "${var.project_name}-${var.environment}-rabbitmq"
+  execution_role_arn       = var.ecs_execution_role_arn
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "512"
+  memory                   = "1024"
+
+  container_definitions = jsonencode([{
+    name      = "rabbitmq"
+    image     = "rabbitmq:3.13-management-alpine"
+    essential = true
+    portMappings = [
+      {
+        containerPort = 5672
+        protocol      = "tcp"
+      },
+      {
+        containerPort = 15672
+        protocol      = "tcp"
+      }
+    ]
+    environment = [
+      {
+        name  = "RABBITMQ_DEFAULT_USER"
+        value = "guest"
+      },
+      {
+        name  = "RABBITMQ_DEFAULT_PASS"
+        value = "guest"
+      }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.ecs.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "rabbitmq"
+      }
+    }
+  }])
+}
+
+# ===========================
 # Service Discovery Services
 # ===========================
 resource "aws_service_discovery_service" "config_server" {
@@ -759,6 +805,23 @@ resource "aws_service_discovery_service" "reporting_service" {
   }
 }
 
+resource "aws_service_discovery_service" "rabbitmq" {
+  name = "rabbitmq"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.this.id
+
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}
+
 # ===========================
 # ECS Services - Config Server (must start first)
 # ===========================
@@ -777,6 +840,27 @@ resource "aws_ecs_service" "config_server" {
 
   service_registries {
     registry_arn = aws_service_discovery_service.config_server.arn
+  }
+}
+
+# ===========================
+# ECS Services - RabbitMQ (must start early)
+# ===========================
+resource "aws_ecs_service" "rabbitmq" {
+  name            = "${var.project_name}-${var.environment}-rabbitmq"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.rabbitmq.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets         = var.private_subnet_ids
+    security_groups = [var.ecs_service_sg]
+    assign_public_ip = false
+  }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.rabbitmq.arn
   }
 }
 
@@ -800,7 +884,10 @@ resource "aws_ecs_service" "authentication_service" {
     registry_arn = aws_service_discovery_service.authentication_service.arn
   }
 
-  depends_on = [aws_ecs_service.config_server]
+  depends_on = [
+    aws_ecs_service.config_server,
+    aws_ecs_service.rabbitmq
+  ]
 }
 
 # ===========================
@@ -823,7 +910,10 @@ resource "aws_ecs_service" "hr_service" {
     registry_arn = aws_service_discovery_service.hr_service.arn
   }
 
-  depends_on = [aws_ecs_service.config_server]
+  depends_on = [
+    aws_ecs_service.config_server,
+    aws_ecs_service.rabbitmq
+  ]
 }
 
 # ===========================
@@ -846,7 +936,10 @@ resource "aws_ecs_service" "finance_service" {
     registry_arn = aws_service_discovery_service.finance_service.arn
   }
 
-  depends_on = [aws_ecs_service.config_server]
+  depends_on = [
+    aws_ecs_service.config_server,
+    aws_ecs_service.rabbitmq
+  ]
 }
 
 # ===========================
@@ -869,7 +962,10 @@ resource "aws_ecs_service" "inventory_service" {
     registry_arn = aws_service_discovery_service.inventory_service.arn
   }
 
-  depends_on = [aws_ecs_service.config_server]
+  depends_on = [
+    aws_ecs_service.config_server,
+    aws_ecs_service.rabbitmq
+  ]
 }
 
 # ===========================
