@@ -469,36 +469,45 @@ jobs:
             exit 0
           fi
           
-          # Try to find RabbitMQ service in AWS
-          echo "Checking for existing RabbitMQ service discovery..."
+          # Try to find and delete any orphaned RabbitMQ service discovery
+          echo "Checking for orphaned RabbitMQ service discovery..."
+          
+          # Get all services and filter for rabbitmq
           ALL_SERVICES=$(aws servicediscovery list-services \
             --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
             --region ${{ env.AWS_REGION }} \
             --query 'Services[*].{Name:Name,Id:Id}' \
             --output json 2>/dev/null || echo "[]")
           
-          RABBITMQ_SERVICE_ID=$(echo "$ALL_SERVICES" | jq -r '.[] | select(.Name=="rabbitmq") | .Id' 2>/dev/null | head -1 || echo "")
+          # Try to find RabbitMQ service using multiple methods
+          RABBITMQ_SERVICE_ID=$(echo "$ALL_SERVICES" | grep -i rabbitmq -A 1 | grep Id | cut -d'"' -f4 | head -1 || echo "")
           
-          if [ -n "$RABBITMQ_SERVICE_ID" ] && [ "$RABBITMQ_SERVICE_ID" != "null" ] && [ "$RABBITMQ_SERVICE_ID" != "" ]; then
+          # If not found, try direct query
+          if [ -z "$RABBITMQ_SERVICE_ID" ] || [ "$RABBITMQ_SERVICE_ID" = "null" ]; then
+            RABBITMQ_SERVICE_ID=$(aws servicediscovery list-services \
+              --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
+              --region ${{ env.AWS_REGION }} \
+              --query "Services[?Name=='rabbitmq'].Id" \
+              --output text 2>/dev/null | head -1 || echo "")
+          fi
+          
+          if [ -n "$RABBITMQ_SERVICE_ID" ] && [ "$RABBITMQ_SERVICE_ID" != "None" ] && [ "$RABBITMQ_SERVICE_ID" != "null" ]; then
             echo "Found existing RabbitMQ service discovery: $RABBITMQ_SERVICE_ID"
             echo "Attempting to import into Terraform state..."
+            
             terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
               "$STATE_KEY" "$RABBITMQ_SERVICE_ID" 2>&1 && \
             echo "✓ Successfully imported RabbitMQ service discovery" || {
-              echo "⚠️ Import failed. Checking if service is in use..."
-              # Check if any ECS service is using this service discovery
-              IN_USE=$(aws servicediscovery get-service --id "$RABBITMQ_SERVICE_ID" --region ${{ env.AWS_REGION }} \
-                --query 'Service.Arn' --output text 2>/dev/null || echo "")
-              if [ -n "$IN_USE" ]; then
-                echo "Service discovery is in use. Attempting to delete orphaned service..."
-                # Try to delete - this might fail if in use, which is fine
-                aws servicediscovery delete-service --id "$RABBITMQ_SERVICE_ID" --region ${{ env.AWS_REGION }} 2>&1 && \
-                echo "✓ Deleted orphaned RabbitMQ service discovery" || \
-                echo "⚠️ Could not delete (may be in use - Terraform will handle it)"
-              fi
+              echo "⚠️ Import failed - attempting to delete orphaned service..."
+              # Try to delete the orphaned service
+              aws servicediscovery delete-service \
+                --id "$RABBITMQ_SERVICE_ID" \
+                --region ${{ env.AWS_REGION }} 2>&1 && \
+              echo "✓ Deleted orphaned RabbitMQ service discovery" || \
+              echo "⚠️ Could not delete (may be in use - will try during Terraform apply)"
             }
           else
-            echo "RabbitMQ service discovery doesn't exist - will be created by Terraform"
+            echo "No existing RabbitMQ service discovery found - Terraform will create it"
           fi
 
       - name: Handle Orphaned Service Discovery Namespace
