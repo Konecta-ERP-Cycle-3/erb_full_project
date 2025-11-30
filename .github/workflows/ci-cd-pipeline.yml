@@ -216,6 +216,15 @@ jobs:
           - name: user-management-service
             context: konecta_erp
             dockerfile: konecta_erp/backend/UserManagementService/Dockerfile
+          - name: hr-service
+            context: konecta_erp
+            dockerfile: konecta_erp/backend/HrService/Dockerfile
+          - name: finance-service
+            context: konecta_erp
+            dockerfile: konecta_erp/backend/FinanceService/Dockerfile
+          - name: inventory-service
+            context: konecta_erp
+            dockerfile: konecta_erp/backend/InventoryService/Dockerfile
           - name: api-gateway
             context: konecta_erp/backend/ApiGateWay
             dockerfile: konecta_erp/backend/ApiGateWay/Dockerfile
