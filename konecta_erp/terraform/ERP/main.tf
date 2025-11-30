@@ -30,8 +30,9 @@ module "security_groups" {
 module "iam" {
   source = "./modules/iam"
 
-  project_name = var.project_name
-  environment  = var.environment
+  project_name        = var.project_name
+  environment         = var.environment
+  docker_hub_secret_arn = var.docker_hub_secret_arn
 }
 
 ##############################################

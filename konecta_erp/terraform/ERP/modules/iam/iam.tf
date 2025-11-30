@@ -23,7 +23,10 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
 }
 
 # Additional policy to allow access to Secrets Manager for Docker Hub credentials
+# Only create this policy if Docker Hub secret ARN is provided
 resource "aws_iam_role_policy" "ecs_execution_secrets" {
+  count = var.docker_hub_secret_arn != "" ? 1 : 0
+  
   name = "${var.project_name}-${var.environment}-ecs-execution-secrets"
   role = aws_iam_role.ecs_execution.id
 
@@ -36,7 +39,7 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
           "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret"
         ]
-        Resource = var.docker_hub_secret_arn != "" ? [var.docker_hub_secret_arn] : []
+        Resource = [var.docker_hub_secret_arn]
       }
     ]
   })

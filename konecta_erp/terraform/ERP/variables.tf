@@ -193,3 +193,9 @@ variable "docker_hub_password" {
   sensitive   = true
   default     = ""
 }
+
+variable "docker_hub_secret_arn" {
+  description = "ARN of the AWS Secrets Manager secret containing Docker Hub credentials (format: {\"username\":\"...\",\"password\":\"...\"})"
+  type        = string
+  default     = ""
+}
