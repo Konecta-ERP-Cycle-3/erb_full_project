@@ -22,6 +22,9 @@ RUN dotnet publish backend/AuthenticationService/AuthenticationService.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS final
 WORKDIR /app
 
+# Install ICU libraries required for .NET globalization
+RUN apk add --no-cache icu-libs icu-data-full
+
 # Create non-root user for security
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser
