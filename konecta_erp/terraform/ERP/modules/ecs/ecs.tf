@@ -4,6 +4,13 @@
 locals {
   # RDS endpoint format: hostname:port, SQL Server needs: hostname,port
   rds_server = replace(var.rds_endpoint, ":", ",")
+  
+  # Docker Hub repository credentials (conditional - only if secret ARN is provided)
+  docker_hub_credentials = var.docker_hub_secret_arn != "" ? {
+    repositoryCredentials = {
+      credentialsParameter = var.docker_hub_secret_arn
+    }
+  } : {}
 }
 
 # ===========================
@@ -99,7 +106,7 @@ resource "aws_ecs_task_definition" "config_server" {
   cpu                      = "256"
   memory                   = "512"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "config-server"
     image     = var.config_server_image
     essential = true
@@ -129,7 +136,7 @@ resource "aws_ecs_task_definition" "config_server" {
         awslogs-stream-prefix = "config-server"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -143,7 +150,7 @@ resource "aws_ecs_task_definition" "authentication_service" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "authentication-service"
     image     = var.authentication_service_image
     essential = true
@@ -181,7 +188,7 @@ resource "aws_ecs_task_definition" "authentication_service" {
         awslogs-stream-prefix = "authentication-service"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -195,7 +202,7 @@ resource "aws_ecs_task_definition" "hr_service" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "hr-service"
     image     = var.hr_service_image
     essential = true
@@ -237,7 +244,7 @@ resource "aws_ecs_task_definition" "hr_service" {
         awslogs-stream-prefix = "hr-service"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -251,7 +258,7 @@ resource "aws_ecs_task_definition" "finance_service" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "finance-service"
     image     = var.finance_service_image
     essential = true
@@ -293,7 +300,7 @@ resource "aws_ecs_task_definition" "finance_service" {
         awslogs-stream-prefix = "finance-service"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -307,7 +314,7 @@ resource "aws_ecs_task_definition" "inventory_service" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "inventory-service"
     image     = var.inventory_service_image
     essential = true
@@ -349,7 +356,7 @@ resource "aws_ecs_task_definition" "inventory_service" {
         awslogs-stream-prefix = "inventory-service"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -363,7 +370,7 @@ resource "aws_ecs_task_definition" "user_management_service" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "user-management-service"
     image     = var.user_management_service_image
     essential = true
@@ -405,7 +412,7 @@ resource "aws_ecs_task_definition" "user_management_service" {
         awslogs-stream-prefix = "user-management-service"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -419,7 +426,7 @@ resource "aws_ecs_task_definition" "api_gateway" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "api-gateway"
     image     = var.api_gateway_image
     essential = true
@@ -493,7 +500,7 @@ resource "aws_ecs_task_definition" "api_gateway" {
         awslogs-stream-prefix = "api-gateway"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -507,7 +514,7 @@ resource "aws_ecs_task_definition" "reporting_service" {
   cpu                      = "512"
   memory                   = "1024"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "reporting-service"
     image     = var.reporting_service_image
     essential = true
@@ -545,7 +552,7 @@ resource "aws_ecs_task_definition" "reporting_service" {
         awslogs-stream-prefix = "reporting-service"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -559,7 +566,7 @@ resource "aws_ecs_task_definition" "hr_model" {
   cpu                      = "1024"
   memory                   = "2048"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "hr-model"
     image     = var.hr_model_image
     essential = true
@@ -575,7 +582,7 @@ resource "aws_ecs_task_definition" "hr_model" {
         awslogs-stream-prefix = "hr-model"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================
@@ -589,7 +596,7 @@ resource "aws_ecs_task_definition" "prophet_model" {
   cpu                      = "1024"
   memory                   = "2048"
 
-  container_definitions = jsonencode([{
+  container_definitions = jsonencode([merge({
     name      = "prophet-model"
     image     = var.prophet_model_image
     essential = true
@@ -605,7 +612,7 @@ resource "aws_ecs_task_definition" "prophet_model" {
         awslogs-stream-prefix = "prophet-model"
       }
     }
-  }])
+  }, local.docker_hub_credentials)])
 }
 
 # ===========================

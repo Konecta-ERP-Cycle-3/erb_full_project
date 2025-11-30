@@ -148,3 +148,9 @@ variable "consul_host" {
   description = "Consul host URL (if using Consul for service discovery)"
   default     = ""
 }
+
+variable "docker_hub_secret_arn" {
+  type        = string
+  description = "ARN of AWS Secrets Manager secret containing Docker Hub credentials"
+  default     = ""
+}

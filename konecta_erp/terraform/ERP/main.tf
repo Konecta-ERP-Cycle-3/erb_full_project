@@ -104,4 +104,7 @@ module "ecs" {
 
   # Consul (optional - for service discovery fallback)
   consul_host = "" # Can be configured if using Consul
+
+  # Docker Hub Authentication
+  docker_hub_secret_arn = var.docker_hub_secret_arn
 }
