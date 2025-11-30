@@ -14,10 +14,12 @@ permissions:
   security-events: write
 
 env:
-  DOCKER_USERNAME: mohamed710
-  DOCKER_REGISTRY: docker.io
+  AWS_ACCOUNT_ID: 585768179815
   AWS_REGION: us-east-1
   TERRAFORM_VERSION: "1.6.0"
+  PROJECT_NAME: konecta-ass1
+  ENVIRONMENT: dev
+  ECR_REGISTRY: 585768179815.dkr.ecr.us-east-1.amazonaws.com
 
 jobs:
   # Security Scanning with Semgrep
@@ -231,25 +233,30 @@ jobs:
           fetch-depth: 0
           submodules: false
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}
+          images: ${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-${{ matrix.service.name }}
           tags: |
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image to ECR
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.context }}
@@ -257,8 +264,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKER_USERNAME }}/${{ matrix.service.name }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-${{ matrix.service.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-${{ matrix.service.name }}:buildcache,mode=max
 
   # Terraform Plan (for PRs and main branch)
   terraform-plan:
@@ -737,7 +744,7 @@ jobs:
           echo "- Consul" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Docker Images:" >> $GITHUB_STEP_SUMMARY
-          echo "All images pushed to: \`${{ env.DOCKER_USERNAME }}/*:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "All images pushed to ECR: \`${{ env.ECR_REGISTRY }}/${{ env.PROJECT_NAME }}-${{ env.ENVIRONMENT }}-*:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Infrastructure:" >> $GITHUB_STEP_SUMMARY
           echo "- AWS ECS Fargate Cluster" >> $GITHUB_STEP_SUMMARY

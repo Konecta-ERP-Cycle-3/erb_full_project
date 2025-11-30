@@ -25,6 +25,17 @@ module "security_groups" {
 }
 
 ##############################################
+# ECR MODULE - Container Repositories
+##############################################
+module "ecr" {
+  source = "./modules/ecr"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+}
+
+##############################################
 # IAM MODULE
 ##############################################
 module "iam" {
@@ -73,17 +84,17 @@ module "ecs" {
   ecs_service_sg = module.security_groups.frontend_ecs_sg_id
   alb_sg_id      = module.security_groups.alb_sg_id
 
-  # Service Images
-  authentication_service_image = var.authentication_service_image
-  user_management_service_image = var.user_management_service_image
-  finance_service_image        = var.finance_service_image
-  hr_service_image             = var.hr_service_image
-  inventory_service_image      = var.inventory_service_image
-  api_gateway_image            = var.api_gateway_image
-  reporting_service_image      = var.reporting_service_image
-  config_server_image          = var.config_server_image
-  hr_model_image               = var.hr_model_image
-  prophet_model_image          = var.prophet_model_image
+  # Service Images (using ECR repositories)
+  authentication_service_image = "${module.ecr.authentication_service_repository_url}:latest"
+  user_management_service_image = "${module.ecr.user_management_service_repository_url}:latest"
+  finance_service_image        = "${module.ecr.finance_service_repository_url}:latest"
+  hr_service_image             = "${module.ecr.hr_service_repository_url}:latest"
+  inventory_service_image      = "${module.ecr.inventory_service_repository_url}:latest"
+  api_gateway_image            = "${module.ecr.api_gateway_repository_url}:latest"
+  reporting_service_image      = "${module.ecr.reporting_service_repository_url}:latest"
+  config_server_image          = "${module.ecr.config_server_repository_url}:latest"
+  hr_model_image               = "${module.ecr.hr_model_repository_url}:latest"
+  prophet_model_image          = "${module.ecr.prophet_model_repository_url}:latest"
 
   # Service Desired Counts
   authentication_service_desired_count = var.authentication_service_desired_count
