@@ -485,10 +485,33 @@ jobs:
               echo "Importing existing service discovery service: $SERVICE_NAME (ID: $SERVICE_ID)"
               terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
                 "$STATE_KEY" "$SERVICE_ID" 2>&1 && \
-              echo "✓ Successfully imported $SERVICE_NAME" || \
-              echo "⚠️ Failed to import $SERVICE_NAME (may already exist or be in use)"
+              echo "✓ Successfully imported $SERVICE_NAME" || {
+                echo "⚠️ Failed to import $SERVICE_NAME"
+                echo "Attempting to delete orphaned service discovery service..."
+                # Try to delete the orphaned service if import fails
+                aws servicediscovery delete-service \
+                  --id "$SERVICE_ID" \
+                  --region ${{ env.AWS_REGION }} 2>&1 && \
+                echo "✓ Deleted orphaned $SERVICE_NAME service discovery" || \
+                echo "⚠️ Could not delete $SERVICE_NAME (may be in use)"
+              }
             else
               echo "Service discovery $SERVICE_NAME doesn't exist in AWS - will be created"
+              # Also check for orphaned services that might not appear in list
+              echo "Double-checking for orphaned $SERVICE_NAME services..."
+              ORPHANED_SERVICES=$(aws servicediscovery list-services \
+                --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
+                --region ${{ env.AWS_REGION }} \
+                --query "Services[?Name=='${SERVICE_NAME}'].Id" \
+                --output text 2>/dev/null || echo "")
+              if [ -n "$ORPHANED_SERVICES" ]; then
+                for ORPHAN_ID in $ORPHANED_SERVICES; do
+                  echo "Found orphaned service: $ORPHAN_ID, attempting to delete..."
+                  aws servicediscovery delete-service \
+                    --id "$ORPHAN_ID" \
+                    --region ${{ env.AWS_REGION }} 2>&1 || echo "Could not delete $ORPHAN_ID"
+                done
+              fi
             fi
           done
 
