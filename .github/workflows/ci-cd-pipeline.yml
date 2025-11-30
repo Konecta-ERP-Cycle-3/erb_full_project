@@ -444,11 +444,11 @@ jobs:
           echo "=== Import Script Output ==="
           cat import-output.log 2>/dev/null || echo "No import log found"
 
-      - name: Import Existing Service Discovery Services
+      - name: Handle Orphaned RabbitMQ Service Discovery
         working-directory: konecta_erp/terraform/ERP
         continue-on-error: true
         run: |
-          echo "=== Importing existing Service Discovery services ==="
+          echo "=== Handling RabbitMQ Service Discovery ==="
           NAMESPACE_ID=$(aws servicediscovery list-namespaces \
             --filters Name=NAME,Values=konecta-ass1.local \
             --region ${{ env.AWS_REGION }} \
@@ -456,64 +456,50 @@ jobs:
             --output text 2>/dev/null || echo "")
           
           if [ -z "$NAMESPACE_ID" ] || [ "$NAMESPACE_ID" = "None" ]; then
-            echo "No namespace found - skipping service discovery imports"
+            echo "No namespace found - skipping"
             exit 0
           fi
           
           echo "Found namespace: $NAMESPACE_ID"
+          STATE_KEY="module.ecs.aws_service_discovery_service.rabbitmq"
           
-          # List of services to check
-          SERVICES=("rabbitmq")
+          # Check if already in Terraform state
+          if terraform state list 2>/dev/null | grep -q "$STATE_KEY"; then
+            echo "✓ RabbitMQ service discovery already in Terraform state"
+            exit 0
+          fi
           
-          for SERVICE_NAME in "${SERVICES[@]}"; do
-            STATE_KEY="module.ecs.aws_service_discovery_service.${SERVICE_NAME}"
-            
-            # Check if already in state
-            if terraform state list 2>/dev/null | grep -q "$STATE_KEY"; then
-              echo "✓ $SERVICE_NAME service discovery already in state"
-              continue
-            fi
-            
-            # Check if service exists in AWS
-            SERVICE_ID=$(aws servicediscovery list-services \
-              --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
-              --region ${{ env.AWS_REGION }} \
-              --query "Services[?Name=='${SERVICE_NAME}'].Id" \
-              --output text 2>/dev/null | head -1 || echo "")
-            
-            if [ -n "$SERVICE_ID" ] && [ "$SERVICE_ID" != "None" ]; then
-              echo "Importing existing service discovery service: $SERVICE_NAME (ID: $SERVICE_ID)"
-              terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
-                "$STATE_KEY" "$SERVICE_ID" 2>&1 && \
-              echo "✓ Successfully imported $SERVICE_NAME" || {
-                echo "⚠️ Failed to import $SERVICE_NAME"
-                echo "Attempting to delete orphaned service discovery service..."
-                # Try to delete the orphaned service if import fails
-                aws servicediscovery delete-service \
-                  --id "$SERVICE_ID" \
-                  --region ${{ env.AWS_REGION }} 2>&1 && \
-                echo "✓ Deleted orphaned $SERVICE_NAME service discovery" || \
-                echo "⚠️ Could not delete $SERVICE_NAME (may be in use)"
-              }
-            else
-              echo "Service discovery $SERVICE_NAME doesn't exist in AWS - will be created"
-              # Also check for orphaned services that might not appear in list
-              echo "Double-checking for orphaned $SERVICE_NAME services..."
-              ORPHANED_SERVICES=$(aws servicediscovery list-services \
-                --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
-                --region ${{ env.AWS_REGION }} \
-                --query "Services[?Name=='${SERVICE_NAME}'].Id" \
-                --output text 2>/dev/null || echo "")
-              if [ -n "$ORPHANED_SERVICES" ]; then
-                for ORPHAN_ID in $ORPHANED_SERVICES; do
-                  echo "Found orphaned service: $ORPHAN_ID, attempting to delete..."
-                  aws servicediscovery delete-service \
-                    --id "$ORPHAN_ID" \
-                    --region ${{ env.AWS_REGION }} 2>&1 || echo "Could not delete $ORPHAN_ID"
-                done
+          # Try to find RabbitMQ service in AWS
+          echo "Checking for existing RabbitMQ service discovery..."
+          ALL_SERVICES=$(aws servicediscovery list-services \
+            --filters Name=NAMESPACE_ID,Values="$NAMESPACE_ID" \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Services[*].{Name:Name,Id:Id}' \
+            --output json 2>/dev/null || echo "[]")
+          
+          RABBITMQ_SERVICE_ID=$(echo "$ALL_SERVICES" | jq -r '.[] | select(.Name=="rabbitmq") | .Id' 2>/dev/null | head -1 || echo "")
+          
+          if [ -n "$RABBITMQ_SERVICE_ID" ] && [ "$RABBITMQ_SERVICE_ID" != "null" ] && [ "$RABBITMQ_SERVICE_ID" != "" ]; then
+            echo "Found existing RabbitMQ service discovery: $RABBITMQ_SERVICE_ID"
+            echo "Attempting to import into Terraform state..."
+            terraform import -var-file=dev.tfvars -var="db_password=${{ secrets.AWS_DB_PASSWORD }}" \
+              "$STATE_KEY" "$RABBITMQ_SERVICE_ID" 2>&1 && \
+            echo "✓ Successfully imported RabbitMQ service discovery" || {
+              echo "⚠️ Import failed. Checking if service is in use..."
+              # Check if any ECS service is using this service discovery
+              IN_USE=$(aws servicediscovery get-service --id "$RABBITMQ_SERVICE_ID" --region ${{ env.AWS_REGION }} \
+                --query 'Service.Arn' --output text 2>/dev/null || echo "")
+              if [ -n "$IN_USE" ]; then
+                echo "Service discovery is in use. Attempting to delete orphaned service..."
+                # Try to delete - this might fail if in use, which is fine
+                aws servicediscovery delete-service --id "$RABBITMQ_SERVICE_ID" --region ${{ env.AWS_REGION }} 2>&1 && \
+                echo "✓ Deleted orphaned RabbitMQ service discovery" || \
+                echo "⚠️ Could not delete (may be in use - Terraform will handle it)"
               fi
-            fi
-          done
+            }
+          else
+            echo "RabbitMQ service discovery doesn't exist - will be created by Terraform"
+          fi
 
       - name: Handle Orphaned Service Discovery Namespace
         working-directory: konecta_erp/terraform/ERP
