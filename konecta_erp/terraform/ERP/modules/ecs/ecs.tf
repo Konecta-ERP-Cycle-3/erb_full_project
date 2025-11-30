@@ -62,11 +62,18 @@ resource "aws_lb_target_group" "api_gateway" {
   health_check {
     enabled             = true
     healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout             = 5
+    unhealthy_threshold = 5
+    timeout             = 10
     interval            = 30
     path                = "/actuator/health"
     matcher             = "200"
+    protocol            = "HTTP"
+  }
+
+  deregistration_delay = 30
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-api-gateway-tg"
   }
 }
 
@@ -422,12 +429,32 @@ resource "aws_ecs_task_definition" "api_gateway" {
     }]
     environment = [
       {
+        name  = "SERVER_PORT"
+        value = "8080"
+      },
+      {
         name  = "SPRING_APPLICATION_NAME"
         value = "api-gateway"
       },
       {
         name  = "SPRING_CLOUD_CONFIG_URI"
         value = "http://config-server.${aws_service_discovery_private_dns_namespace.this.name}:8888"
+      },
+      {
+        name  = "SPRING_CLOUD_CONFIG_FAILFAST"
+        value = "false"
+      },
+      {
+        name  = "CONSUL_HOST"
+        value = var.consul_host
+      },
+      {
+        name  = "CONSUL_PORT"
+        value = "8500"
+      },
+      {
+        name  = "CONSUL_REGISTER"
+        value = "false"
       },
       {
         name  = "AUTH_SERVICE_URI"

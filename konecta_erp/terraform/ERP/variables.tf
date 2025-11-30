@@ -179,3 +179,17 @@ variable "prophet_model_desired_count" {
   type        = number
   default     = 1
 }
+
+# Docker Hub Authentication (to avoid rate limits)
+variable "docker_hub_username" {
+  description = "Docker Hub username for authentication"
+  type        = string
+  default     = ""
+}
+
+variable "docker_hub_password" {
+  description = "Docker Hub password or access token"
+  type        = string
+  sensitive   = true
+  default     = ""
+}

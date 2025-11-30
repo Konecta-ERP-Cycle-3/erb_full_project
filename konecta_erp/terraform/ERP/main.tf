@@ -47,7 +47,8 @@ module "rds" {
 
   db_username = var.db_username
   db_password = var.db_password
-  db_name     = "dbuser"
+  # db_name not used for SQL Server - databases created separately after instance creation
+  db_name     = ""
 }
 
 ##############################################

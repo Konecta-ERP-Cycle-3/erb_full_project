@@ -12,7 +12,7 @@ resource "aws_db_instance" "this" {
   storage_type            = "gp2"
   storage_encrypted       = false
 
-  db_name                 = var.db_name
+  # Note: db_name is not supported for SQL Server - databases are created separately
   username                = var.db_username
   password                = var.db_password
 
