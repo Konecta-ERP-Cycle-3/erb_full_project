@@ -78,7 +78,7 @@ resource "aws_lb_target_group" "api_gateway" {
     timeout             = 10
     interval            = 30
     path                = "/actuator/health/ping"
-    matcher             = "200,503"
+    matcher             = "200"
     protocol            = "HTTP"
   }
 
@@ -131,6 +131,10 @@ resource "aws_ecs_task_definition" "config_server" {
       {
         name  = "CONSUL_PORT"
         value = "8500"
+      },
+      {
+        name  = "CONSUL_REGISTER"
+        value = "false"
       }
     ]
     logConfiguration = {
