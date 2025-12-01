@@ -197,8 +197,6 @@ upstreams:
   reporting: "${REPORTING_SERVICE_URI:http://localhost:8085}"
 
 management:
-  server:
-    port: ${MANAGEMENT_PORT:8081}
   endpoints:
     web:
       exposure:
@@ -212,7 +210,7 @@ management:
     circuitbreakers:
       enabled: true
     consul:
-      enabled: true
+      enabled: false
 
 resilience4j:
   circuitbreaker:

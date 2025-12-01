@@ -109,7 +109,7 @@ services:
       - finance-service
       - reporting-service
     ports:
-      - "8080:8080"
+      - "8090:8080"
     networks:
       - erp-network
 

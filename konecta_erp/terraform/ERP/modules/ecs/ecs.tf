@@ -77,8 +77,8 @@ resource "aws_lb_target_group" "api_gateway" {
     unhealthy_threshold = 5
     timeout             = 10
     interval            = 30
-    path                = "/actuator/health"
-    matcher             = "200"
+    path                = "/actuator/health/ping"
+    matcher             = "200,503"
     protocol            = "HTTP"
   }
 
@@ -183,6 +183,22 @@ resource "aws_ecs_task_definition" "authentication_service" {
       {
         name  = "ConnectionStrings__DefaultConnection"
         value = "Server=${local.rds_server};Database=Konecta_Auth;User Id=${var.db_username};Password=${var.db_password};TrustServerCertificate=True;"
+      },
+      {
+        name  = "RabbitMq__HostName"
+        value = "rabbitmq.${aws_service_discovery_private_dns_namespace.this.name}"
+      },
+      {
+        name  = "RabbitMq__Port"
+        value = "5672"
+      },
+      {
+        name  = "RabbitMq__UserName"
+        value = "guest"
+      },
+      {
+        name  = "RabbitMq__Password"
+        value = "guest"
       }
     ]
     logConfiguration = {
@@ -239,6 +255,22 @@ resource "aws_ecs_task_definition" "hr_service" {
       {
         name  = "JwtSettings__JwksUri"
         value = "http://authentication-service.${aws_service_discovery_private_dns_namespace.this.name}:7280/.well-known/jwks.json"
+      },
+      {
+        name  = "RabbitMq__HostName"
+        value = "rabbitmq.${aws_service_discovery_private_dns_namespace.this.name}"
+      },
+      {
+        name  = "RabbitMq__Port"
+        value = "5672"
+      },
+      {
+        name  = "RabbitMq__UserName"
+        value = "guest"
+      },
+      {
+        name  = "RabbitMq__Password"
+        value = "guest"
       }
     ]
     logConfiguration = {
@@ -407,6 +439,22 @@ resource "aws_ecs_task_definition" "user_management_service" {
       {
         name  = "JwtSettings__JwksUri"
         value = "http://authentication-service.${aws_service_discovery_private_dns_namespace.this.name}:7280/.well-known/jwks.json"
+      },
+      {
+        name  = "RabbitMq__HostName"
+        value = "rabbitmq.${aws_service_discovery_private_dns_namespace.this.name}"
+      },
+      {
+        name  = "RabbitMq__Port"
+        value = "5672"
+      },
+      {
+        name  = "RabbitMq__UserName"
+        value = "guest"
+      },
+      {
+        name  = "RabbitMq__Password"
+        value = "guest"
       }
     ]
     logConfiguration = {
