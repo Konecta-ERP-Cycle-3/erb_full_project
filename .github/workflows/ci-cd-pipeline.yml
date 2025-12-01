@@ -876,13 +876,33 @@ jobs:
           fi
 
       - name: Wait for ECS Services
+        working-directory: konecta_erp/terraform/ERP
+        continue-on-error: true
         run: |
           echo "Waiting for ECS services to stabilize..."
-          # Get cluster name from Terraform output or use default
-          CLUSTER_NAME=$(terraform output -raw cluster_name 2>/dev/null || echo "konecta-ass1-dev-cluster")
+          # Get cluster name from Terraform state or output, or use default
+          CLUSTER_NAME=$(terraform output -raw cluster_name 2>/dev/null || \
+            terraform state show module.ecs.aws_ecs_cluster.main 2>/dev/null | grep -E '^\s+name\s*=' | awk -F'"' '{print $2}' || \
+            echo "konecta-ass1-dev-cluster")
+          
+          if [ -z "$CLUSTER_NAME" ] || [ "$CLUSTER_NAME" = "" ]; then
+            # Fallback: try to get from project name in tfvars
+            PROJECT_NAME=$(grep -E '^project_name\s*=' dev.tfvars | cut -d'"' -f2 || echo "konecta-ass1")
+            ENVIRONMENT=$(grep -E '^environment\s*=' dev.tfvars | cut -d'"' -f2 || echo "dev")
+            CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-cluster"
+          fi
+          
           echo "Checking cluster: $CLUSTER_NAME"
           sleep 30
-          aws ecs list-services --cluster "$CLUSTER_NAME" --region ${{ env.AWS_REGION }} || echo "Cluster not ready yet"
+          
+          # Check if cluster exists
+          if aws ecs describe-clusters --clusters "$CLUSTER_NAME" --region ${{ env.AWS_REGION }} --query 'clusters[0].status' --output text 2>/dev/null | grep -q "ACTIVE"; then
+            echo "✓ Cluster is active"
+            echo "Services in cluster:"
+            aws ecs list-services --cluster "$CLUSTER_NAME" --region ${{ env.AWS_REGION }} --query 'serviceArns[*]' --output table 2>/dev/null || echo "Could not list services"
+          else
+            echo "⚠️ Cluster not ready yet or not found"
+          fi
 
       - name: Deployment Summary
         run: |

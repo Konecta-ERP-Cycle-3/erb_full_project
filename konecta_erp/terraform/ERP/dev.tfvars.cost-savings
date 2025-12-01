@@ -1,0 +1,33 @@
+# Cost Savings Configuration
+# All services scaled to 0 to save costs
+
+aws_region  = "us-east-1"
+db_password = "KonectaERP2024!DevPass"
+
+# Docker Hub Authentication
+docker_hub_secret_arn = "arn:aws:secretsmanager:us-east-1:585768179815:secret:konecta-ass1-dev-docker-hub-credentials-oLW5ta"
+
+# Service Images (keeping them for when we scale back up)
+authentication_service_image  = "mohamed710/authentication-service:latest"
+user_management_service_image = "mohamed710/user-management-service:latest"
+finance_service_image         = "mohamed710/finance-service:latest"
+hr_service_image              = "mohamed710/hr-service:latest"
+inventory_service_image       = "mohamed710/inventory-service:latest"
+api_gateway_image             = "mohamed710/api-gateway:latest"
+reporting_service_image       = "mohamed710/reporting-service:latest"
+config_server_image           = "mohamed710/config-server:latest"
+hr_model_image                = "mohamed710/hr-model:latest"
+prophet_model_image           = "mohamed710/prophet-model:latest"
+
+# SCALE ALL SERVICES TO 0 TO SAVE COSTS
+authentication_service_desired_count  = 0
+user_management_service_desired_count = 0
+finance_service_desired_count         = 0
+hr_service_desired_count              = 0
+inventory_service_desired_count       = 0
+api_gateway_desired_count             = 0
+reporting_service_desired_count       = 0
+config_server_desired_count           = 0
+hr_model_desired_count                = 0
+prophet_model_desired_count           = 0
+
